@@ -1,0 +1,179 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, dev, stable ]
+  pull_request:
+    branches: [ master, dev, stable ]
+
+env:
+  DOTNET_VERSION: '6.0.x'
+  DOTNET_STANDARD_VERSION: '2.0'
+
+jobs:
+  version:
+    name: Calculate Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.gitversion.outputs.SemVer }}
+      assemblySemVer: ${{ steps.gitversion.outputs.AssemblySemVer }}
+      nugetVersion: ${{ steps.gitversion.outputs.NuGetVersionV2 }}
+      branchName: ${{ steps.gitversion.outputs.BranchName }}
+      isRelease: ${{ steps.gitversion.outputs.BranchName == 'master' || steps.gitversion.outputs.BranchName == 'stable' }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.10.2
+      with:
+        versionSpec: '5.x'
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.10.2
+      with:
+        useConfigFile: true
+
+    - name: Display Version
+      run: |
+        echo "Version: ${{ steps.gitversion.outputs.SemVer }}"
+        echo "Assembly Version: ${{ steps.gitversion.outputs.AssemblySemVer }}"
+        echo "NuGet Version: ${{ steps.gitversion.outputs.NuGetVersionV2 }}"
+        echo "Branch: ${{ steps.gitversion.outputs.BranchName }}"
+
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    needs: version
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release -p:Version=${{ needs.version.outputs.version }} -p:AssemblyVersion=${{ needs.version.outputs.assemblySemVer }}
+
+    - name: Test
+      run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: coverage.xml
+        fail_ci_if_error: true
+
+  package:
+    name: Create NuGet Package
+    runs-on: ubuntu-latest
+    needs: [version, build-and-test]
+    if: github.event_name == 'push'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release -p:Version=${{ needs.version.outputs.version }} -p:AssemblyVersion=${{ needs.version.outputs.assemblySemVer }}
+
+    - name: Pack
+      run: dotnet pack --no-build --configuration Release -p:PackageVersion=${{ needs.version.outputs.nugetVersion }} --output ./artifacts
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: nuget-packages
+        path: ./artifacts/*.nupkg
+
+  publish-prerelease:
+    name: Publish Pre-release
+    runs-on: ubuntu-latest
+    needs: [version, package]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    environment: development
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: nuget-packages
+        path: ./artifacts
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Push to NuGet (Pre-release)
+      run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+  publish-release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: [version, package]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/stable')
+    environment: production
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: nuget-packages
+        path: ./artifacts
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Push to NuGet
+      run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ needs.version.outputs.version }}
+        release_name: Release v${{ needs.version.outputs.version }}
+        body: |
+          ## Changes in v${{ needs.version.outputs.version }}
+          
+          This release was automatically generated from the ${{ needs.version.outputs.branchName }} branch.
+          
+          ### NuGet Package
+          - [FundraiseUp.Client v${{ needs.version.outputs.nugetVersion }}](https://www.nuget.org/packages/FundraiseUp.Client/${{ needs.version.outputs.nugetVersion }})
+          
+          ### Installation
+          ```bash
+          dotnet add package FundraiseUp.Client --version ${{ needs.version.outputs.nugetVersion }}
+          ```
+        draft: false
+        prerelease: ${{ needs.version.outputs.branchName != 'master' }}
+
+    - name: Upload Release Assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/FundraiseUp.Client.${{ needs.version.outputs.nugetVersion }}.nupkg
+        asset_name: FundraiseUp.Client.${{ needs.version.outputs.nugetVersion }}.nupkg
+        asset_content_type: application/octet-stream
