@@ -1,0 +1,59 @@
+
+## .NET Core / .NET 5+
+bin/
+obj/
+out/
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.vcxproj.user
+
+## Rider
+.idea/
+
+## VS Code
+.vscode/
+
+## Test Coverage
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
+*.trx
+
+## NuGet
+packages/
+*.nupkg
+*.nuget.props
+*.nuget.targets
+.nuget/
+
+## Codacy
+.codacy/
+codacy-*.json
+codacy-results.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log
+logs/
+
+## Temporary files
+*.tmp
+*.temp
+*~

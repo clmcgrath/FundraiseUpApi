@@ -1,71 +1,30 @@
+# Simple GitHub Flow with semantic versioning
 mode: ContinuousDelivery
+
 branches:
+  # Production releases - stable versions only
   master:
-    regex: ^master$|^main$
-    mode: ContinuousDelivery
-    tag: ''
     increment: Patch
-    prevent-increment-of-merged-branch-version: true
-    track-merge-target: false
-    tracks-release-branches: false
-    is-release-branch: true
     is-mainline: true
-    pre-release-weight: 55000
+  
+  # Development branch - pre-release versions  
   dev:
-    regex: ^dev(elop)?(ment)?$
-    mode: ContinuousDeployment
     tag: 'alpha'
     increment: Minor
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: true
-    tracks-release-branches: true
-    is-release-branch: false
-    is-mainline: false
-    pre-release-weight: 0
-  stable:
-    regex: ^stable$
-    mode: ContinuousDelivery
-    tag: ''
+  
+  # Beta branch - release candidates for testing
+  beta:
+    regex: ^beta$|^release[/-]
+    tag: 'beta'
     increment: Patch
-    prevent-increment-of-merged-branch-version: true
-    track-merge-target: false
-    tracks-release-branches: false
-    is-release-branch: true
-    is-mainline: true
-    pre-release-weight: 55000
+    
+  # Feature branches - inherit version from parent
   feature:
     regex: ^features?[/-]
-    mode: ContinuousDeployment
     tag: useBranchName
     increment: Inherit
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: false
-    tracks-release-branches: false
-    is-release-branch: false
-    is-mainline: false
-    pre-release-weight: 30000
-  pull-request:
-    regex: ^(pull|pull\-requests|pr)[/-]
-    mode: ContinuousDeployment
-    tag: PullRequest
-    increment: Inherit
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: false
-    tracks-release-branches: false
-    is-release-branch: false
-    is-mainline: false
-    pre-release-weight: 30000
+    
+  # Hotfix branches - patch releases
   hotfix:
-    regex: ^hotfix(es)?[/-]
-    mode: ContinuousDeployment
-    tag: beta
+    regex: ^hotfix[/-]
     increment: Patch
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: false
-    tracks-release-branches: false
-    is-release-branch: false
-    is-mainline: false
-    pre-release-weight: 40000
-ignore:
-  sha: []
-merge-message-formats: {}

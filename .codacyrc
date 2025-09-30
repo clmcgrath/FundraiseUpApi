@@ -1,0 +1,92 @@
+# Codacy configuration file for .NET projects
+# This file provides additional configuration beyond .codacy.yml
+
+# File patterns to analyze
+include_patterns:
+  - "src/**/*.cs"
+  - "tests/**/*.cs"
+  - "*.md"
+  - "*.yml"
+  - "*.yaml"
+  - "*.json"
+
+# File patterns to exclude
+exclude_patterns:
+  - "src/**/bin/**"
+  - "src/**/obj/**"
+  - "tests/**/bin/**"
+  - "tests/**/obj/**"
+  - "**/*.Designer.cs"
+  - "**/*.Generated.cs"
+  - "**/AssemblyInfo.cs"
+  - "**/*.min.js"
+  - "**/*.min.css"
+  - "**/node_modules/**"
+  - "**/packages/**"
+  - "**/.nuget/**"
+
+# Language-specific configurations
+languages:
+  csharp:
+    extensions:
+      - .cs
+    
+    # Security patterns
+    security_patterns:
+      - sql_injection
+      - xss
+      - path_traversal
+      - weak_crypto
+      - hardcoded_secrets
+    
+    # Performance patterns  
+    performance_patterns:
+      - inefficient_loops
+      - unnecessary_allocations
+      - blocking_calls
+      - memory_leaks
+    
+    # Code style patterns
+    style_patterns:
+      - naming_conventions
+      - unused_variables
+      - dead_code
+      - complex_methods
+      - long_parameter_lists
+
+# Thresholds
+thresholds:
+  complexity:
+    cyclomatic: 10
+    cognitive: 15
+  
+  duplication:
+    threshold: 3
+    minimum_tokens: 50
+  
+  coverage:
+    minimum: 80
+    target: 90
+  
+  file_size:
+    maximum_lines: 500
+    warning_lines: 300
+  
+  method_size:
+    maximum_lines: 50
+    warning_lines: 30
+
+# Issue prioritization
+issue_priority:
+  security: critical
+  performance: high
+  maintainability: medium
+  style: low
+
+# Ignore specific rules for test files
+test_file_rules:
+  exclude:
+    - "public_members_documentation"
+    - "method_length"
+    - "class_complexity"
+    - "magic_numbers"

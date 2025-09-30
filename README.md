@@ -1,8 +1,9 @@
 # FundraiseUp .NET Client Library
 
 [![NuGet](https://img.shields.io/nuget/v/FundraiseUp.Client.svg)](https://www.nuget.org/packages/FundraiseUp.Client)
-[![Build Status](https://github.com/YourOrg/FundraiseUpApi/workflows/CI/badge.svg)](https://github.com/YourOrg/FundraiseUpApi/actions)
-[![Coverage](https://codecov.io/gh/YourOrg/FundraiseUpApi/branch/master/graph/badge.svg)](https://codecov.io/gh/YourOrg/FundraiseUpApi)
+[![Build and Test](https://github.com/YourOrg/FundraiseUpApi/actions/workflows/build-test.yml/badge.svg)](https://github.com/YourOrg/FundraiseUpApi/actions/workflows/build-test.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/[PROJECT_ID])](https://app.codacy.com/gh/YourOrg/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/[PROJECT_ID])](https://app.codacy.com/gh/YourOrg/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-Standard%202.0%20%7C%20.NET%206+-512BD4.svg)](https://dotnet.microsoft.com/)
 
