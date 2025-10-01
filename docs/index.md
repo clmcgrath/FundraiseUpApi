@@ -125,6 +125,7 @@ public class DonationService
 - [**FAQ**](faq.md) - Frequently asked questions and answers
 - [**Troubleshooting**](troubleshooting.md) - Common issues and solutions
 - [**Migration Guide**](migration-guide.md) - Version upgrade guides
+- [**Roadmap**](roadmap.md) - Future development plans and priorities
 - [**Changelog**](changelog.md) - Complete version history
 
 ## 🏗️ Architecture
