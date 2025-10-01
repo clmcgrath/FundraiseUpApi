@@ -196,7 +196,9 @@ namespace FundraiseUp.Client.Tests.UnitTests
             result.Should().NotBeNull();
             result.Items.Should().HaveCount(2);
             result.Items.Should().OnlyContain(d => d.Supporter.Id == donorId);
-            result.TotalCount.Should().Be(0); // FundraiseUp API uses cursor pagination, no total count
+            // The FundraiseUp API uses cursor-based pagination and does not return a total count.
+            // When converting the cursor-based response to a PagedResult, TotalCount is set to 0 to reflect this.
+            result.TotalCount.Should().Be(0);
             result.CurrentPage.Should().Be(1);
             result.PageSize.Should().Be(10);
             result.HasMore.Should().BeFalse();
