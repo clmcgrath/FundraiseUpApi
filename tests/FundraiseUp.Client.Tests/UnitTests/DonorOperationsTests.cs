@@ -201,7 +201,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
             result.PageSize.Should().Be(10);
             result.HasMore.Should().BeFalse();
         }
-
+            // result.TotalCount is not asserted because FundraiseUp API uses cursor pagination and does not provide a total count
         // [Fact] - COMMENTED OUT: Supporter statistics not available in current FundraiseUp API
         // public async Task GetDonorStatistics_WithValidId_ShouldReturnStats()
         // {
