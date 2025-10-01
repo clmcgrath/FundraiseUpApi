@@ -203,10 +203,10 @@ namespace FundraiseUp.Client.Utilities
             }
 
             // This should never be reached, but just in case
-            throw new RateLimitExceededException(
-                $"Fallback in SendWithRetryStrategy reached after {retryCount} attempts. " +
-                $"Current requests: {_currentRequests}/{_options.MaxConcurrentRequests}. " +
-                $"Request: {request.Method} {request.RequestUri?.AbsolutePath}",
+            _logger?.LogError(
+                "Fallback in SendWithRetryStrategy reached after {RetryCount} attempts. Current requests: {CurrentRequests}/{MaxConcurrentRequests}. Request: {Method} {Path}",
+                retryCount, _currentRequests, _options.MaxConcurrentRequests, request.Method, request.RequestUri?.AbsolutePath);
+            throw new RateLimitExceededException("Unexpected fallback in SendWithRetryStrategy.",
                 (int)_currentRequests,
                 _options.MaxConcurrentRequests
             );
