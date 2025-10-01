@@ -37,12 +37,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
             }, _httpClient, logger.Object);
         }
 
-        // [Fact] - COMMENTED OUT: Supporters cannot be created via FundraiseUp API - they are created automatically with donations
-        // public async Task CreateDonor_WithValidRequest_ShouldReturnDonor()
-        // {
-        //     // This test is disabled because supporters are read-only in FundraiseUp API
-        //     // Supporters are created automatically when donations are made
-        // }
+        // Note: Supporters cannot be created via FundraiseUp API; they are created automatically with donations.
 
         [Fact]
         public async Task GetDonor_WithValidId_ShouldReturnDonor()
@@ -138,7 +133,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Act
             var result = await _client.Supporters
                 .Search()
-                .Where(d => d.Email != null && d.Email.Contains("example.com"))
+                .Where(d => d.Email?.Contains("example.com") == true)
                 .ExecuteAsync();
 
             // Assert
@@ -200,13 +195,14 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Assert
             result.Should().NotBeNull();
             result.Items.Should().HaveCount(2);
-            result.Items.Should().OnlyContain(d => d.Supporter.Id == donorId);
-            result.TotalCount.Should().Be(0); // FundraiseUp API uses cursor pagination, no total count
+            result.Items.Should().BeEquivalentTo(expectedResult.Data);
+            // The FundraiseUp API uses cursor-based pagination and does not return a total count.
+            // When converting the cursor-based response to a PagedResult, TotalCount is set to 0 to reflect this.
+            result.TotalCount.Should().Be(0);
             result.CurrentPage.Should().Be(1);
             result.PageSize.Should().Be(10);
             result.HasMore.Should().BeFalse();
         }
-
         // [Fact] - COMMENTED OUT: Supporter statistics not available in current FundraiseUp API
         // public async Task GetDonorStatistics_WithValidId_ShouldReturnStats()
         // {

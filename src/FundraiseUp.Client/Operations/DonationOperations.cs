@@ -201,10 +201,7 @@ namespace FundraiseUp.Client.Operations
         /// <inheritdoc />
         public IDonationListOperationBuilder Where(Expression<Func<DonationResponse, bool>> predicate)
         {
-            // Note: FundraiseUp API has limited filtering capabilities
-            // This is kept for compatibility but may not translate to API filters
-            _logger?.LogWarning("Complex where expressions may not be supported by FundraiseUp API");
-            return this;
+            throw new NotSupportedException("Arbitrary filtering via Where is not supported by the FundraiseUp API.");
         }
 
         /// <inheritdoc />
@@ -246,7 +243,7 @@ namespace FundraiseUp.Client.Operations
         /// <inheritdoc />
         public async Task<PagedResult<DonationResponse>> ExecuteAsync()
         {
-            var queryString = string.Join("&", _queryParameters.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+            var queryString = string.Join("&", _queryParameters.Select(kvp => $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
             var endpoint = string.IsNullOrEmpty(queryString) ? "/v1/donations" : $"/v1/donations?{queryString}";
 
             var response = await _httpClient.GetAsync<DonationsResponse>(endpoint, _correlationId);

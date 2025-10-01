@@ -155,7 +155,7 @@ namespace FundraiseUp.Client.Utilities
                         var response = await base.SendAsync(request, cancellationToken);
 
                         // Check if we got a 429 Too Many Requests response  
-                        if (response.StatusCode == (HttpStatusCode)429)
+                        if (response.StatusCode == HttpStatusCode.TooManyRequests)
                         {
                             var retryAfter = GetRetryAfterSeconds(response);
                             if (retryCount < maxRetries)
@@ -202,8 +202,7 @@ namespace FundraiseUp.Client.Utilities
                 }
             }
 
-            // This should never be reached, but just in case
-            throw new RateLimitExceededException((int)_currentRequests, _options.MaxConcurrentRequests);
+            // All code paths should return or throw above; unreachable fallback removed.
         }
 
         /// <summary>
