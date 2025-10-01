@@ -269,11 +269,34 @@ namespace FundraiseUp.Client.Models
     /// </summary>
     public static class DonationStatus
     {
+        /// <summary>
+        /// The donation was successfully processed and the payment was completed.
+        /// </summary>
         public const string Succeeded = "succeeded";
+
+        /// <summary>
+        /// The donation attempt failed and was not completed. This may be due to payment issues or other errors.
+        /// </summary>
         public const string Failed = "failed";
+
+        /// <summary>
+        /// The donation was refunded to the donor after being processed.
+        /// </summary>
         public const string Refunded = "refunded";
+
+        /// <summary>
+        /// The donation is pending and has not yet been completed or failed. This may occur for delayed or asynchronous payments.
+        /// </summary>
         public const string Pending = "pending";
+
+        /// <summary>
+        /// The donation is being retried after a previous failure, typically for recurring or scheduled donations.
+        /// </summary>
         public const string Retrying = "retrying";
+
+        /// <summary>
+        /// The donation is scheduled to be processed at a future date (e.g., for recurring donations).
+        /// </summary>
         public const string Scheduled = "scheduled";
     }
 
