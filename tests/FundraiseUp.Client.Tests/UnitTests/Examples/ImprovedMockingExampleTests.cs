@@ -56,7 +56,7 @@ namespace FundraiseUp.Client.Tests.UnitTests.Examples
                 {
                     FirstName = "Test",
                     LastName = "User",
-                    Email = "" // Invalid - empty email
+                    Email = "" // Invalid: empty email
                 },
                 Amount = "-10", // Invalid - negative
                 Currency = "USD",
