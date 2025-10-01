@@ -1,7 +1,7 @@
 # FundraiseUp .NET Client Library
 
 [![NuGet](https://img.shields.io/nuget/v/FundraiseUp.Client.svg)](https://www.nuget.org/packages/FundraiseUp.Client)
-[![Build and Test](https://github.com/clmcgrath/FundraiseUpApi/actions/workflows/build-test.yml/badge.svg)](https://github.com/clmcgrath/FundraiseUpApi/actions/workflows/build-test.yml)
+[![Build and Test](https://github.com/clmcgrath/FundraiseUpApi/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/clmcgrath/FundraiseUpApi/actions/workflows/ci-cd.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/YOUR_PROJECT_ID)](https://app.codacy.com/gh/clmcgrath/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/YOUR_PROJECT_ID)](https://app.codacy.com/gh/clmcgrath/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -926,7 +926,7 @@ This library follows constitutional design principles:
 ### Building from Source
 ```bash
 # Clone the repository
-git clone https://github.com/YourOrg/FundraiseUpApi.git
+git clone https://github.com/clmcgrath/FundraiseUpApi.git
 cd FundraiseUpApi
 
 # Restore dependencies
@@ -964,9 +964,9 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 🤝 Support & Community
 
-- **📖 Documentation**: [https://yourorgg.github.io/FundraiseUpApi/](https://yourorgg.github.io/FundraiseUpApi/)
-- **🐛 Bug Reports**: [GitHub Issues](https://github.com/YourOrg/FundraiseUpApi/issues)
-- **💡 Feature Requests**: [GitHub Discussions](https://github.com/YourOrg/FundraiseUpApi/discussions)
+- **📖 Documentation**: [https://clmcgrath.github.io/FundraiseUpApi/](https://clmcgrath.github.io/FundraiseUpApi/)
+- **🐛 Bug Reports**: [GitHub Issues](https://github.com/clmcgrath/FundraiseUpApi/issues)
+- **💡 Feature Requests**: [GitHub Discussions](https://github.com/clmcgrath/FundraiseUpApi/discussions)
 - **❓ Questions**: [Stack Overflow](https://stackoverflow.com/questions/tagged/fundraiseup-dotnet) (tag: `fundraiseup-dotnet`)
 
 ## 📜 License
@@ -977,7 +977,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [FundraiseUp](https://fundraiseup.com/) for providing the API and documentation
 - [Microsoft](https://microsoft.com/) for the .NET ecosystem and tooling
-- All [contributors](https://github.com/YourOrg/FundraiseUpApi/contributors) who help make this library better
+- All [contributors](https://github.com/clmcgrath/FundraiseUpApi/contributors) who help make this library better
 
 ---
 
