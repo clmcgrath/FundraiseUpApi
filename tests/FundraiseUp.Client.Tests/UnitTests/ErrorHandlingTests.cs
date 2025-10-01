@@ -110,10 +110,20 @@ namespace FundraiseUp.Client.Tests.UnitTests
 
             var invalidRequest = new CreateDonationRequest
             {
-                Amount = -100.00m, // Invalid negative amount
+                Amount = "-100.00", // Invalid negative amount
                 Currency = "USD",
-                DonorEmail = "test@example.com",
-                CampaignId = "campaign-123"
+                Supporter = new SupporterRequest
+                {
+                    FirstName = "Test",
+                    LastName = "User",
+                    Email = "test@example.com"
+                },
+                Campaign = "campaign-123",
+                Designation = "EXXXXXXX",
+                PaymentMethod = new PaymentMethodRequest
+                {
+                    Stripe = new StripePaymentMethodRequest { Id = "pm_card_visa" }
+                }
             };
 
             // Act & Assert
@@ -148,7 +158,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Act & Assert
             var exception = await Assert.ThrowsAsync<FundraiseUpApiException>(async () =>
             {
-                await _client.Donors
+                await _client.Supporters
                     .GetById("some-donor")
                     .ExecuteAsync();
             });
@@ -189,10 +199,20 @@ namespace FundraiseUp.Client.Tests.UnitTests
 
             var invalidRequest = new CreateDonationRequest
             {
-                Amount = 0.00m,
+                Amount = "0.00",
                 Currency = "USD",
-                DonorEmail = "invalid-email",
-                CampaignId = "campaign-123"
+                Supporter = new SupporterRequest
+                {
+                    FirstName = "Test",
+                    LastName = "User",
+                    Email = "invalid-email"
+                },
+                Campaign = "campaign-123",
+                Designation = "EXXXXXXX",
+                PaymentMethod = new PaymentMethodRequest
+                {
+                    Stripe = new StripePaymentMethodRequest { Id = "pm_card_visa" }
+                }
             };
 
             // Act & Assert
@@ -263,10 +283,20 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Arrange
             var request = new CreateDonationRequest
             {
-                Amount = 100.00m,
+                Amount = "100.00",
                 Currency = "USD",
-                DonorEmail = invalidEmail,
-                CampaignId = "campaign-123"
+                Supporter = new SupporterRequest
+                {
+                    FirstName = "Test",
+                    LastName = "User",
+                    Email = invalidEmail
+                },
+                Campaign = "campaign-123",
+                Designation = "EXXXXXXX",
+                PaymentMethod = new PaymentMethodRequest
+                {
+                    Stripe = new StripePaymentMethodRequest { Id = "pm_card_visa" }
+                }
             };
 
             // Act & Assert
@@ -312,10 +342,20 @@ namespace FundraiseUp.Client.Tests.UnitTests
 
             var invalidRequest = new CreateDonationRequest
             {
-                Amount = invalidAmount,
+                Amount = invalidAmount.ToString(),
                 Currency = "USD",
-                DonorEmail = "test@example.com",
-                CampaignId = "campaign-123"
+                Supporter = new SupporterRequest
+                {
+                    FirstName = "Test",
+                    LastName = "User",
+                    Email = "test@example.com"
+                },
+                Campaign = "campaign-123",
+                Designation = "EXXXXXXX",
+                PaymentMethod = new PaymentMethodRequest
+                {
+                    Stripe = new StripePaymentMethodRequest { Id = "pm_card_visa" }
+                }
             };
 
             // Act & Assert
