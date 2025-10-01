@@ -13,11 +13,8 @@ This document provides comprehensive examples of how to use the FundraiseUp .NET
 
 - [Getting Started](#getting-started)
 - [Donation Management](#donation-management)
+- [Campaign Management](#campaign-management)
 - [Supporter Management](#supporter-management)
-- [Fundraiser Management](#fundraiser-management)
-- [Recurring Plan Operations](#recurring-plan-operations)
-- [Event Operations (Audit Logs)](#event-operations-audit-logs)
-- [Donor Portal Integration](#donor-portal-integration)
 - [Error Handling](#error-handling)
 - [Advanced Scenarios](#advanced-scenarios)
 - [Testing Examples](#testing-examples)

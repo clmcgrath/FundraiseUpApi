@@ -86,14 +86,66 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    - name: Extract Release Notes from CHANGELOG
+      id: changelog
+      run: |
+        # Extract the latest release notes from CHANGELOG.md
+        if [ -f "CHANGELOG.md" ]; then
+          # Get content between ## [Unreleased] and the next ## section or end of file
+          RELEASE_NOTES=$(awk '/## \[Unreleased\]/{flag=1; next} /^## \[/{flag=0} flag && /^###|^####|^\-|^\*/{if(count<20) {print; count++}}' CHANGELOG.md | head -20)
+          
+          # If no unreleased section, get the latest version section
+          if [ -z "$RELEASE_NOTES" ]; then
+            RELEASE_NOTES=$(awk '/^## \[[0-9]/{flag=1; next} /^## \[/{if(flag) flag=0} flag && /^###|^####|^\-|^\*/{if(count<20) {print; count++}}' CHANGELOG.md | head -20)
+          fi
+          
+          # Clean up and format for XML
+          RELEASE_NOTES=$(echo "$RELEASE_NOTES" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g' | tr '\n' '|')
+          echo "notes=$RELEASE_NOTES" >> $GITHUB_OUTPUT
+        else
+          echo "notes=- Thread-safe rate limiting with configurable strategies|  - Comprehensive error handling and retry logic|  - Support for all FundraiseUp API endpoints" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Update NuSpec Release Notes
+      run: |
+        # Replace release notes in nuspec file
+        RELEASE_NOTES="${{ steps.changelog.outputs.notes }}"
+        FORMATTED_NOTES=$(echo "$RELEASE_NOTES" | tr '|' '\n' | sed 's/^/      /')
+        
+        # Create temporary file with updated release notes
+        cat > temp_release_notes.txt << 'EOF'
+        $FORMATTED_NOTES
+        EOF
+        
+        # Update the nuspec file
+        if [ -f "FundraiseUpApi.nuspec" ]; then
+          # Replace the releaseNotes section
+          awk '
+            /<releaseNotes>/ { 
+              print; 
+              while ((getline line < "temp_release_notes.txt") > 0) print "      " line;
+              while (getline && !/<\/releaseNotes>/) continue;
+              print "    </releaseNotes>";
+              next 
+            } 
+            { print }
+          ' FundraiseUpApi.nuspec > FundraiseUpApi.nuspec.tmp && mv FundraiseUpApi.nuspec.tmp FundraiseUpApi.nuspec
+          rm -f temp_release_notes.txt
+        fi
+
     - name: Restore dependencies
       run: dotnet restore
 
     - name: Build
       run: dotnet build --no-restore --configuration Release -p:Version=${{ needs.version.outputs.version }} -p:AssemblyVersion=${{ needs.version.outputs.assemblySemVer }}
 
-    - name: Pack
-      run: dotnet pack --no-build --configuration Release -p:PackageVersion=${{ needs.version.outputs.nugetVersion }} --output ./artifacts
+    - name: Pack with NuSpec
+      run: |
+        # Update version in nuspec
+        sed -i "s/\$version\$/${{ needs.version.outputs.nugetVersion }}/g" FundraiseUpApi.nuspec
+        
+        # Pack using dotnet pack with nuspec file
+        dotnet pack --no-build --configuration Release --output ./artifacts -p:NuspecFile=FundraiseUpApi.nuspec -p:PackageVersion=${{ needs.version.outputs.nugetVersion }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
@@ -106,7 +158,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [version, package]
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-    environment: development
+    environment: 
+      name: development
+      url: https://www.nuget.org/packages/FundraiseUpApi/
     steps:
     - name: Download artifacts
       uses: actions/download-artifact@v3
@@ -119,7 +173,10 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Push to NuGet (Pre-release)
+    - name: Push to GitHub Packages (Pre-release)
+      run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
+
+    - name: Push to NuGet.org (Pre-release)
       run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
   publish-release:
@@ -127,7 +184,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [version, package]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/stable')
-    environment: production
+    environment:
+      name: production
+      url: https://www.nuget.org/packages/FundraiseUpApi/
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -143,10 +202,14 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Push to NuGet
+    - name: Push to GitHub Packages
+      run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
+
+    - name: Push to NuGet.org
       run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
     - name: Create GitHub Release
+      id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
