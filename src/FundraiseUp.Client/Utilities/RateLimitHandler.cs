@@ -12,7 +12,7 @@ namespace FundraiseUp.Client.Utilities
     /// <summary>
     /// HTTP message handler that enforces FundraiseUp API rate limiting.
     /// </summary>
-    public class RateLimitHandler : DelegatingHandler
+    public class RateLimitHandler : DelegatingHandler, IDisposable
     {
         private readonly FundraiseUpClientOptions _options;
         private readonly ILogger<RateLimitHandler>? _logger;
