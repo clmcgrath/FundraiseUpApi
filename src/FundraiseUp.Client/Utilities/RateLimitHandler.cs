@@ -202,14 +202,7 @@ namespace FundraiseUp.Client.Utilities
                 }
             }
 
-            // This should never be reached, but just in case
-            _logger?.LogError(
-                "Fallback in SendWithRetryStrategy reached after {RetryCount} attempts. Current requests: {CurrentRequests}/{MaxConcurrentRequests}. Request: {Method} {Path}",
-                retryCount, _currentRequests, _options.MaxConcurrentRequests, request.Method, request.RequestUri?.AbsolutePath);
-            throw new RateLimitExceededException("Unexpected fallback in SendWithRetryStrategy.",
-                (int)_currentRequests,
-                _options.MaxConcurrentRequests
-            );
+            // All code paths should return or throw above; unreachable fallback removed.
         }
 
         /// <summary>
