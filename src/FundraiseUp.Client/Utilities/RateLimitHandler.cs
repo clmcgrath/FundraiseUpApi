@@ -155,7 +155,7 @@ namespace FundraiseUp.Client.Utilities
                         var response = await base.SendAsync(request, cancellationToken);
 
                         // Check if we got a 429 Too Many Requests response  
-                        if (response.StatusCode == (HttpStatusCode)429)
+                        if (response.StatusCode == HttpStatusCode.TooManyRequests)
                         {
                             var retryAfter = GetRetryAfterSeconds(response);
                             if (retryCount < maxRetries)
