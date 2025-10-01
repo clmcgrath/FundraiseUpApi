@@ -4,11 +4,13 @@ mode: ContinuousDelivery
 branches:
   # Production releases - stable versions only
   master:
+    regex: ^master$|^main$
     increment: Patch
     is-mainline: true
   
   # Development branch - pre-release versions  
   dev:
+    regex: ^dev$|^develop$
     tag: 'alpha'
     increment: Minor
   
