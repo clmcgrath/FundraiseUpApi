@@ -1,7 +1,11 @@
 ---
 layout: default
 title: Home
-nav_order: 1
+nav_ord| [Performance Guide](performance.md) | Optimization tips and best practices |
+
+## 🚀 Quick Start {#quick-start}
+
+### Installation
 description: "A modern, fluent .NET client library for consuming the FundraiseUp API"
 permalink: /
 ---
