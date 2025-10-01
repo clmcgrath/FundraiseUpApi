@@ -1,3 +1,10 @@
+---
+layout: default
+title: Configuration
+nav_order: 3
+description: "Comprehensive configuration options for the FundraiseUp .NET Client Library"
+---
+
 # Configuration Guide
 
 The FundraiseUp .NET Client Library provides comprehensive configuration options to fit your application's needs.

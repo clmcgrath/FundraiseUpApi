@@ -1,9 +1,26 @@
+---
+layout: default
+title: Changelog
+nav_order: 8
+description: "Complete changelog for the FundraiseUp .NET Client Library"
+---
+
 # Changelog
+{: .no_toc }
 
-All notable changes to the FundraiseUp .NET Client Library will be documented in this file.
+All notable changes to the FundraiseUp .NET Client Library are documented in this file.
+{: .fs-6 .fw-300 }
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+{: .fs-6 .fw-300 }
+
+## Table of contents
+{: .no_toc .text-delta }
+
+1. TOC
+{:toc}
+
+---
 
 ## [Unreleased]
 
@@ -51,7 +68,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Error Handling Tests**: Complete coverage of exception scenarios and edge cases
 - **API Contract Tests**: Validation of all request/response models against actual API
 
-## [1.0.0] - 2025-01-15 (Planned)
+---
+
+## [1.0.0] - 2025-01-XX
 
 ### 🎉 Initial Release
 
@@ -68,10 +87,18 @@ The FundraiseUp .NET Client Library is now available! This is a modern, fluent .
 
 #### API Operations
 - **Donations**: Create, retrieve, list, and manage donations
-- **Campaigns**: Create, retrieve, list campaigns and get statistics
-- **Donors**: Create, retrieve, list donors and get donation history
+- **Supporters**: Retrieve and list supporter information (created automatically via donations)
+- **Campaigns**: Read campaign information and statistics (managed via Dashboard)
+- **Fundraisers**: Create, retrieve, list, and update individual fundraisers
+- **Recurring Plans**: Access recurring donation plan information
+- **Events**: Query comprehensive audit logs and system events
+- **Donor Portal**: Generate secure access links for supporter self-service
+
+#### Enhanced Features
+- **Smart Rate Limiting**: Built-in rate limiting with Queue, Retry, and Exception strategies for FundraiseUp's 3 concurrent request limit
+- **Thread Safety**: Rate limiting works seamlessly across all threads and connection pooling strategies
+- **Cursor-Based Pagination**: Native support for FundraiseUp's cursor pagination
 - **Fluent Filtering**: Chainable filters for listing operations (by campaign, status, date ranges)
-- **Pagination**: Built-in support for paginated responses
 
 #### Error Handling & Reliability
 - **Custom Exceptions**: Specific exception types for different error scenarios
@@ -79,13 +106,14 @@ The FundraiseUp .NET Client Library is now available! This is a modern, fluent .
   - `FundraiseUpValidationException`: Validation errors with detailed field information
   - `FundraiseUpNotFoundException`: Resource not found errors
   - `FundraiseUpAuthenticationException`: Authentication/authorization errors
+  - `FundraiseUpRateLimitException`: Rate limiting exceptions with retry guidance
 - **Retry Logic**: Configurable retry policies with exponential backoff
 - **Timeout Management**: Per-request and global timeout configuration
 - **HTTP Status Code Handling**: Proper handling of all HTTP response codes
 
 #### Configuration & Flexibility
 - **Multiple Configuration Sources**: API key via constructor, configuration, or environment variables
-- **Configuration Options**: Base URL, timeouts, retry attempts, logging levels
+- **Configuration Options**: Base URL, timeouts, retry attempts, logging levels, rate limiting strategies
 - **Environment Support**: Easy switching between sandbox and production environments
 - **Logging Integration**: Comprehensive logging using Microsoft.Extensions.Logging
 
@@ -99,29 +127,33 @@ The FundraiseUp .NET Client Library is now available! This is a modern, fluent .
 ### 🧪 Testing & Quality
 
 #### Unit Testing Framework
-- **35 Comprehensive Unit Tests**: Full coverage of core functionality
+- **Comprehensive Unit Tests**: Full coverage of core functionality
 - **Mock Framework**: Advanced mocking utilities for contributor testing
 - **MockResponseBuilder**: Centralized test data generation
 - **HttpClientMockSetup**: Simplified HTTP client mocking
 - **No API Key Required**: Complete testing without live API credentials
 
 #### Testing Tools
-- **Realistic Test Data**: Sample donations, campaigns, and donors
+- **Realistic Test Data**: Sample donations, campaigns, and supporters
 - **Error Scenario Testing**: Validation errors, HTTP errors, network failures
 - **Pagination Testing**: Mock paginated responses for list operations
 - **Async Testing**: Proper async/await testing patterns
+- **Rate Limiting Tests**: Concurrent request handling validation
 
 ### 📚 Documentation
 
 #### Comprehensive Guides
-- **README.md**: Complete overview with installation and usage examples
-- **GETTING-STARTED.md**: Step-by-step guide for new users
-- **EXAMPLES.md**: Real-world usage patterns and advanced scenarios
-- **TESTING.md**: Testing strategies and best practices
-- **API Documentation**: Full XML documentation for IntelliSense
+- **Professional Documentation Site**: Complete Jekyll site with Just the Docs theme
+- **Getting Started Guide**: Step-by-step guide for new users
+- **Configuration Reference**: Complete configuration options with validation
+- **Examples Collection**: Real-world usage patterns and advanced scenarios
+- **Rate Limiting Guide**: Thread safety and connection pooling compatibility
+- **Testing Documentation**: Testing strategies and best practices
+- **Error Handling Guide**: Exception handling patterns and troubleshooting
+- **Performance Guide**: Optimization strategies and best practices
 
 #### Usage Examples
-- **Basic Operations**: Creating donations, campaigns, and donors
+- **Basic Operations**: Creating donations, managing supporters
 - **Advanced Scenarios**: Batch processing, custom retry logic, error handling
 - **Integration Patterns**: ASP.NET Core integration, dependency injection
 - **Testing Examples**: Unit testing, integration testing, mocking strategies
@@ -136,17 +168,19 @@ The FundraiseUp .NET Client Library is now available! This is a modern, fluent .
 - **Repository Pattern**: Clean abstraction over HTTP operations
 
 #### Performance Optimizations
-- **Connection Pooling**: Efficient HTTP connection reuse
+- **Connection Pooling**: Efficient HTTP connection reuse with rate limiting compatibility
 - **Async Operations**: Non-blocking I/O operations throughout
 - **Memory Management**: Minimal allocations and proper disposal
 - **JSON Performance**: Optimized serialization with System.Text.Json
 - **Request Compression**: Optional GZIP compression support
+- **Smart Rate Limiting**: Prevents API throttling while maximizing throughput
 
 #### Security
 - **API Key Management**: Secure handling of authentication credentials
 - **HTTPS Only**: Enforced HTTPS for all API communications
 - **Request Validation**: Input validation to prevent malformed requests
 - **Sensitive Data Logging**: Careful handling of sensitive information in logs
+- **CI/CD Security**: Pinned GitHub Actions to prevent supply chain attacks
 
 ### 🛠️ Development Tools
 
@@ -154,7 +188,8 @@ The FundraiseUp .NET Client Library is now available! This is a modern, fluent .
 - **Multi-Target Build**: Automatic building for multiple frameworks
 - **NuGet Package**: Automated package generation and metadata
 - **GitHub Actions**: Continuous integration with automated testing
-- **Code Quality**: Automated code analysis and formatting
+- **Code Quality**: Codacy integration for comprehensive quality analysis
+- **Coverage Reporting**: Automated coverage reporting with Codacy
 
 #### Developer Workflow
 - **EditorConfig**: Consistent code formatting across editors
@@ -166,9 +201,9 @@ The FundraiseUp .NET Client Library is now available! This is a modern, fluent .
 
 - **Package ID**: `FundraiseUp.Client`
 - **Version**: `1.0.0`
-- **Target Frameworks**: .NET Standard 2.0, .NET 6.0
+- **Target Frameworks**: .NET Standard 2.0, .NET 6.0+
 - **Dependencies**: Microsoft.Extensions.*, System.Text.Json, System.Net.Http
-- **License**: [License Type]
+- **License**: MIT License
 - **Repository**: https://github.com/clmcgrath/FundraiseUpApi
 
 ### 🚀 Getting Started
@@ -182,19 +217,28 @@ dotnet add package FundraiseUp.Client
 ```
 
 ```csharp
-// Quick start example
+// Quick start example with rate limiting
 using FundraiseUp.Client;
-using FundraiseUp.Client.Requests;
+using FundraiseUp.Client.Configuration;
 
-var client = new FundraiseUpClient("your-api-key");
+var services = new ServiceCollection();
+services.AddFundraiseUpClient(options =>
+{
+    options.ApiKey = "your-api-key";
+    options.RateLimitStrategy = RateLimitStrategy.Queue; // Handle rate limiting automatically
+});
+
+var serviceProvider = services.BuildServiceProvider();
+var client = serviceProvider.GetRequiredService<IFundraiseUpClient>();
 
 var donation = await client.Donations
     .Create(new CreateDonationRequest
     {
-        Amount = 25.00m,
+        Amount = "25.00",
         Currency = "USD",
         DonorEmail = "supporter@example.com",
-        CampaignId = "campaign-123"
+        Campaign = "FUNXXXXXXXX",
+        Designation = "EXXXXXXX"
     })
     .ExecuteAsync();
 
@@ -204,12 +248,12 @@ Console.WriteLine($"Created donation: {donation.Id}");
 ### 🎯 What's Next
 
 Future releases will include:
+- **Integration Tests**: Comprehensive testing against live API (pending API access)
 - **Webhook Support**: Handling FundraiseUp webhook events
-- **Bulk Operations**: Efficient batch processing of donations and campaigns
-- **Advanced Filtering**: More sophisticated query capabilities
-- **Caching Layer**: Optional response caching for improved performance
+- **Bulk Operations**: Efficient batch processing capabilities
+- **Advanced Caching**: Optional response caching for improved performance
 - **Metrics & Telemetry**: Built-in metrics collection and reporting
-- **Additional Endpoints**: Support for new FundraiseUp API features
+- **Additional Endpoints**: Support for new FundraiseUp API features as they become available
 
 ---
 
@@ -219,18 +263,17 @@ This is the initial release, so no migration is required. For future versions, m
 
 ### 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
+We welcome contributions! Please see our documentation for details on how to get started with development and testing.
 
 ### 📄 License
 
-This project is licensed under [License Type] - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/clmcgrath/FundraiseUpApi/blob/main/LICENSE) file for details.
 
 ### 🆘 Support
 
-- **Documentation**: [README.md](README.md) and [docs/](docs/) directory
+- **Documentation**: [Complete Documentation Site](https://clmcgrath.github.io/FundraiseUpApi/)
 - **Issues**: [GitHub Issues](https://github.com/clmcgrath/FundraiseUpApi/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/clmcgrath/FundraiseUpApi/discussions)
-- **Email**: [Support Email]
 
 ---
 

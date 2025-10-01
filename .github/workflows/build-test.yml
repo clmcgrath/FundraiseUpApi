@@ -29,13 +29,13 @@ jobs:
       run: dotnet build --no-restore --configuration Release
     
     - name: Test
-      run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
+      run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
     
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4
+    - name: Upload coverage reports to Codacy
+      uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699
       with:
-        file: '**/coverage.cobertura.xml'
-        fail_ci_if_error: false
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: '**/coverage.cobertura.xml'
 
     - name: Code Quality Check
       run: |

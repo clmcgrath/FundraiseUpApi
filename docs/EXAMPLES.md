@@ -1,3 +1,10 @@
+---
+layout: default
+title: Examples
+nav_order: 5
+description: "Comprehensive usage examples for the FundraiseUp .NET Client Library"
+---
+
 # FundraiseUp .NET Client - Usage Examples
 
 This document provides comprehensive examples of how to use the FundraiseUp .NET Client Library for various scenarios.

@@ -22,46 +22,13 @@ namespace FundraiseUp.Client.Tests.UnitTests.Examples
         //     // This test is disabled because campaigns are read-only in FundraiseUp API
         // }
 
-        [Fact]
+        [Fact(Skip = "Campaigns cannot be listed via API - they are read-only and managed through FundraiseUp dashboard")]
         public async Task ListCampaigns_WithPagination_ShouldReturnPagedResults()
         {
-            // Arrange - Mock paginated response
-            var campaigns = new[]
-            {
-                MockResponseBuilder.CreateSampleCampaign("campaign-1"),
-                MockResponseBuilder.CreateSampleCampaign("campaign-2")
-            };
-
-            var mockResponse = MockResponseBuilder.CreatePaginatedResponse(
-                campaigns,
-                page: 1,
-                pageSize: 10,
-                totalCount: 25
-            );
-
-            var httpMockSetup = new HttpClientMockSetup();
-            httpMockSetup.SetupRequest(HttpMethod.Get, "/campaigns", mockResponse);
-
-            var httpClient = httpMockSetup.CreateHttpClient();
-            var logger = new Mock<ILogger<FundraiseUpClient>>();
-
-            var client = new FundraiseUpClient("test-api-key", new FundraiseUpClientOptions
-            {
-                BaseUrl = "https://api.test.com"
-            }, httpClient, logger.Object);
-
-            // Act
-            var result = await client.Campaigns
-                .List()
-                .WithLimit(10)
-                .ExecuteAsync();
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Items.Should().HaveCount(2);
-            result.TotalCount.Should().Be(25);
-            result.CurrentPage.Should().Be(1);
-            result.PageSize.Should().Be(10);
+            // NOTE: This test is skipped because the FundraiseUp API does not support listing campaigns.
+            // Campaigns are managed through the FundraiseUp dashboard and are read-only via the API.
+            // Campaign data is only available embedded within donation, supporter, and other entity responses.
+            await Task.CompletedTask;
         }
 
         [Fact]

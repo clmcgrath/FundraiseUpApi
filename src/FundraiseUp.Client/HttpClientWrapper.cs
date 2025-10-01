@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using FundraiseUp.Client.Configuration;
 using FundraiseUp.Client.Models;
+using FundraiseUp.Client.Utilities;
 using Microsoft.Extensions.Logging;
 
 namespace FundraiseUp.Client
@@ -33,7 +34,13 @@ namespace FundraiseUp.Client
             _logger = logger;
             _ownsHttpClient = true; // We created this HttpClient, so we own it
 
-            _httpClient = new HttpClient
+            // Create HTTP client with rate limiting handler
+            var rateLimitHandler = new RateLimitHandler(options, logger as ILogger<RateLimitHandler>)
+            {
+                InnerHandler = new HttpClientHandler()
+            };
+
+            _httpClient = new HttpClient(rateLimitHandler)
             {
                 BaseAddress = new Uri(options.BaseUrl),
                 Timeout = options.Timeout
