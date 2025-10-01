@@ -106,6 +106,7 @@ public class DonationService
 
 - [**Getting Started**](getting-started.md) - Installation and basic setup
 - [**Configuration Guide**](configuration.md) - Comprehensive configuration options
+- [**HttpClientFactory Integration**](httpclientfactory.md) - Enterprise HTTP client management
 - [**API Reference**](api-reference.md) - Complete API documentation
 - [**Examples**](examples.md) - Common usage patterns and scenarios
 - [**Error Handling**](error-handling.md) - Exception types and handling strategies
