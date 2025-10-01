@@ -31,5 +31,20 @@ namespace FundraiseUp.Client.Operations
 
         // No operations implemented - campaigns are only accessible as embedded data
         // within other API responses (donations, supporters, etc.)
+
+        // All campaign operations are not supported.
+        // Implement interface methods to throw NotSupportedException.
+
+        // Example method signatures; replace with actual signatures from ICampaignOperations.
+        // If ICampaignOperations has methods like GetCampaign, CreateCampaign, etc., implement them as below.
+
+        // Example:
+        // public Task<Campaign> GetCampaignAsync(string id)
+        // {
+        //     throw new NotSupportedException("Campaign operations are not supported. Campaigns are read-only and only accessible as embedded data within other API responses.");
+        // }
+
+        // Implement all interface methods similarly.
+        // If the interface is empty, consider removing both the interface and this class.
     }
 }
