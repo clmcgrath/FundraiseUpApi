@@ -25,7 +25,10 @@ namespace FundraiseUp.Client.Tests.UnitTests
         public DonationOperationsTests()
         {
             _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-            _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+            _httpClient = new HttpClient(_httpMessageHandlerMock.Object)
+            {
+                BaseAddress = new Uri("https://api.test.com")
+            };
             var logger = new Mock<ILogger<FundraiseUpClient>>();
 
             _client = new FundraiseUpClient("test-api-key", new FundraiseUpClientOptions
@@ -182,10 +185,11 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Assert
             result.Should().NotBeNull();
             result.Items.Should().HaveCount(2);
-            result.TotalCount.Should().Be(2);
+            result.TotalCount.Should().Be(0); // FundraiseUp API uses cursor pagination, no total count
             result.CurrentPage.Should().Be(1);
             result.PageSize.Should().Be(10);
-            result.TotalPages.Should().Be(1);
+            result.HasMore.Should().BeFalse();
+            result.HasNextPage.Should().BeFalse();
         }
 
         // [Fact] - COMMENTED OUT: Donations are immutable in FundraiseUp API - cannot be updated after creation

@@ -121,8 +121,9 @@ namespace FundraiseUp.Client.Requests
         /// <summary>
         /// Supporter's email address. Maximum 254 characters.
         /// </summary>
+        [Required]
         [EmailAddress]
-        public string? Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         /// <summary>
         /// Supporter's phone number. Maximum 20 characters.

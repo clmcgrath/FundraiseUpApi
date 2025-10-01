@@ -25,7 +25,10 @@ namespace FundraiseUp.Client.Tests.UnitTests
         public DonorOperationsTests()
         {
             _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-            _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+            _httpClient = new HttpClient(_httpMessageHandlerMock.Object)
+            {
+                BaseAddress = new Uri("https://api.test.com")
+            };
             var logger = new Mock<ILogger<FundraiseUpClient>>();
 
             _client = new FundraiseUpClient("test-api-key", new FundraiseUpClientOptions
@@ -140,10 +143,9 @@ namespace FundraiseUp.Client.Tests.UnitTests
 
             // Assert
             result.Should().NotBeNull();
-            result.Items.Should().HaveCount(2);
-            result.TotalCount.Should().Be(2);
-            result.CurrentPage.Should().Be(1);
-            result.PageSize.Should().Be(20);
+            result.Data.Should().HaveCount(2);
+            result.HasMore.Should().BeFalse();
+            result.NextCursor.Should().BeNull();
         }
 
         [Fact]
@@ -151,9 +153,9 @@ namespace FundraiseUp.Client.Tests.UnitTests
         {
             // Arrange
             var donorId = "donor-donations";
-            var expectedResult = new PagedResult<DonationResponse>
+            var expectedResult = new DonationsResponse
             {
-                Items = new List<DonationResponse>
+                Data = new List<DonationResponse>
                 {
                     new DonationResponse
                     {
@@ -172,9 +174,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
                         Supporter = new EmbeddedSupporterResponse { Id = donorId }
                     }
                 },
-                TotalCount = 2,
-                CurrentPage = 1,
-                PageSize = 10
+                HasMore = false
             };
 
             var jsonResponse = JsonSerializer.Serialize(expectedResult, JsonConfiguration.DefaultOptions);
@@ -201,9 +201,10 @@ namespace FundraiseUp.Client.Tests.UnitTests
             result.Should().NotBeNull();
             result.Items.Should().HaveCount(2);
             result.Items.Should().OnlyContain(d => d.Supporter.Id == donorId);
-            result.TotalCount.Should().Be(2);
+            result.TotalCount.Should().Be(0); // FundraiseUp API uses cursor pagination, no total count
             result.CurrentPage.Should().Be(1);
             result.PageSize.Should().Be(10);
+            result.HasMore.Should().BeFalse();
         }
 
         // [Fact] - COMMENTED OUT: Supporter statistics not available in current FundraiseUp API

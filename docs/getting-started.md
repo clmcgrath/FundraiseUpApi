@@ -1,3 +1,10 @@
+---
+layout: default
+title: Getting Started
+nav_order: 2
+description: "Get up and running with the FundraiseUp .NET Client Library"
+---
+
 # Getting Started
 
 This guide will help you get up and running with the FundraiseUp .NET Client Library quickly.

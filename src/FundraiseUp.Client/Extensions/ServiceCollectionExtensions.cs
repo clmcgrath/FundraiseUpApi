@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using FundraiseUp.Client.Configuration;
+using FundraiseUp.Client.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -44,7 +45,7 @@ namespace FundraiseUp.Client
             // Register the options
             services.Configure(configure);
 
-            // Register HttpClient with factory for proper lifecycle management
+            // Register HttpClient with factory for proper lifecycle management and rate limiting
             services.AddHttpClient(HttpClientName, (serviceProvider, httpClient) =>
             {
                 var clientOptions = serviceProvider.GetRequiredService<IOptions<FundraiseUpClientOptions>>().Value;
@@ -60,6 +61,12 @@ namespace FundraiseUp.Client
                 {
                     httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
+            })
+            .AddHttpMessageHandler(serviceProvider =>
+            {
+                var clientOptions = serviceProvider.GetRequiredService<IOptions<FundraiseUpClientOptions>>().Value;
+                var logger = serviceProvider.GetService<ILogger<RateLimitHandler>>();
+                return new RateLimitHandler(clientOptions, logger);
             });
 
             // Register the client using HttpClientFactory

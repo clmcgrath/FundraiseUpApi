@@ -21,7 +21,7 @@ namespace FundraiseUp.Client.Operations
         public DonorPortalOperations(HttpClientWrapper httpClient, ILogger? logger = null)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger;
         }
 
         /// <summary>

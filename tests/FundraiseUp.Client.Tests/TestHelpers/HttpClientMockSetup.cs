@@ -78,7 +78,10 @@ namespace FundraiseUp.Client.Tests.TestHelpers
         /// </summary>
         public HttpClient CreateHttpClient()
         {
-            return new HttpClient(_mockHandler.Object);
+            return new HttpClient(_mockHandler.Object)
+            {
+                BaseAddress = new Uri("https://api.test.com")
+            };
         }
 
         /// <summary>

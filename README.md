@@ -2,7 +2,8 @@
 
 [![NuGet](https://img.shields.io/nuget/v/FundraiseUp.Client.svg)](https://www.nuget.org/packages/FundraiseUp.Client)
 [![Build and Test](https://github.com/clmcgrath/FundraiseUpApi/actions/workflows/build-test.yml/badge.svg)](https://github.com/clmcgrath/FundraiseUpApi/actions/workflows/build-test.yml)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/[PROJECT_ID])](https://app.codacy.com/gh/clmcgrath/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/YOUR_PROJECT_ID)](https://app.codacy.com/gh/clmcgrath/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/YOUR_PROJECT_ID)](https://app.codacy.com/gh/clmcgrath/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-Standard%202.0%20%7C%20.NET%206+-512BD4.svg)](https://dotnet.microsoft.com/)
 
@@ -14,6 +15,7 @@ A modern, fluent .NET client library for the FundraiseUp API with comprehensive 
 - **💉 Dependency Injection Ready** - Native Microsoft DI integration with configuration options
 - **⚡ Async-First Architecture** - All operations use async/await with CancellationToken support
 - **🛡️ Enterprise-Grade Reliability** - Configurable retry policies, timeout handling, and comprehensive error handling
+- **⚡ Smart Rate Limiting** - Built-in rate limiting with Queue, Retry, and Exception strategies for FundraiseUp's 3 concurrent request limit
 - **🔄 Multi-Framework Support** - Targets .NET Standard 2.0 and .NET 6+ for maximum compatibility
 - **📊 Comprehensive Testing** - Extensive unit test coverage with mocking framework for contributors
 - **🔒 Security-First Design** - HTTPS enforcement, secure credential management
@@ -157,6 +159,114 @@ public class DonationService
     }
 }
 ```
+
+### ⚡ Smart Rate Limiting
+
+The FundraiseUp client includes intelligent rate limiting to handle the API's 3 concurrent request limit per account. Choose from three strategies based on your application's needs:
+
+```csharp
+// Queue Strategy: Queue requests when limit is reached (Default - Recommended)
+builder.Services.AddFundraiseUpClient(options =>
+{
+    options.ApiKey = "your-api-key";
+    options.RateLimitStrategy = RateLimitStrategy.Queue;   // Default
+    options.MaxConcurrentRequests = 3;                    // FundraiseUp API limit
+    options.MaxQueueSize = 100;                           // Max queued requests
+    options.QueueTimeout = TimeSpan.FromMinutes(2);       // Queue timeout
+});
+
+// Retry Strategy: Retry with exponential backoff
+builder.Services.AddFundraiseUpClient(options =>
+{
+    options.ApiKey = "your-api-key";
+    options.RateLimitStrategy = RateLimitStrategy.Retry;
+    options.MaxRetryAttempts = 5;                         // Max retry attempts
+    options.RetryDelay = TimeSpan.FromSeconds(1);         // Base delay (exponential backoff)
+});
+
+// Exception Strategy: Throw immediately when limit exceeded
+builder.Services.AddFundraiseUpClient(options =>
+{
+    options.ApiKey = "your-api-key";
+    options.RateLimitStrategy = RateLimitStrategy.Exception;
+});
+```
+
+**Rate Limiting Strategies:**
+- 🚦 **Queue (Recommended)** - Requests wait in queue until slots available
+- 🔄 **Retry** - Automatic retry with exponential backoff on rate limit
+- ⚡ **Exception** - Immediate `RateLimitExceededException` when limit hit
+
+**Automatic Features:**
+- Handles FundraiseUp's 3 concurrent request limit per account
+- Respects HTTP 429 responses with `Retry-After` headers
+- Thread-safe concurrent request tracking
+- Configurable timeouts and queue sizes
+- Comprehensive logging of rate limit events
+
+#### 🔄 Rate Limiting with Connection Pooling
+
+Rate limiting works seamlessly with HttpClientFactory's connection pooling and is **thread-safe across all connections and pooling strategies**:
+
+```csharp
+// ✅ RECOMMENDED: HttpClientFactory + DI (Single Rate Limiter)
+builder.Services.AddFundraiseUpClient(options => 
+{
+    options.ApiKey = "your-api-key";
+    options.RateLimitStrategy = RateLimitStrategy.Queue;
+})
+.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+{
+    MaxConnectionsPerServer = 5,              // Higher than rate limit
+    PooledConnectionLifetime = TimeSpan.FromMinutes(15)
+});
+
+// ✅ Rate limiting happens BEFORE connection pooling
+// Request Flow: Thread → RateLimitHandler → Connection Pool → FundraiseUp API
+//                        (3 max concurrent)   (Reuse connections)   (API enforced)
+```
+
+**Connection Pooling Compatibility:**
+- **✅ Default Pooled Handler** - Rate limiting applied before connection reuse
+- **✅ SocketsHttpHandler** - Works with advanced socket management
+- **✅ Custom Handler Chains** - Position rate limiting appropriately in chain
+- **✅ All Threading Models** - Safe across async/await, Task.Run, Parallel.ForEach
+
+**⚠️ Important: Avoid Multiple Client Instances**
+```csharp
+// ❌ PROBLEMATIC - Each client has separate rate limiter!
+var client1 = new FundraiseUpClient("api-key");  // Own RateLimitHandler (3 max)
+var client2 = new FundraiseUpClient("api-key");  // Own RateLimitHandler (3 max)
+// Could allow 6 concurrent requests, violating FundraiseUp's 3-request API limit
+
+// ✅ CORRECT - Use dependency injection for shared rate limiting
+public class Service1(IFundraiseUpClient client) { }  // Shared rate limiter
+public class Service2(IFundraiseUpClient client) { }  // Shared rate limiter
+```
+
+**Advanced Configuration:**
+```csharp
+// Fine-tune connection pooling with rate limiting
+services.AddFundraiseUpClient(options => 
+{
+    options.RateLimitStrategy = RateLimitStrategy.Queue;
+    options.MaxConcurrentRequests = 3;       // API limit
+    options.MaxQueueSize = 50;               // Queue capacity
+    options.QueueTimeout = TimeSpan.FromMinutes(1);
+})
+.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+{
+    MaxConnectionsPerServer = 10,            // Connection pool size
+    PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+    PooledConnectionLifetime = TimeSpan.FromMinutes(10)
+});
+```
+
+**Thread Safety Guarantees:**
+- 🧵 **Cross-Thread**: Rate limits enforced across all threads
+- 🔄 **Connection Reuse**: Pooled connections safely shared within rate limits  
+- ⚡ **High Concurrency**: Lock-free operations using `SemaphoreSlim` and `Interlocked`
+- 🎯 **Global Enforcement**: Single rate limiter per HttpClient name, regardless of usage
 
 ## 📋 Comprehensive Usage Examples
 
@@ -452,6 +562,114 @@ var client = new FundraiseUpClient(
 );
 ```
 
+## 🎯 Rate Limiting Best Practices
+
+### ✅ Recommended Patterns
+
+**1. Use HttpClientFactory with Dependency Injection**
+```csharp
+// Single rate limiter shared across entire application
+builder.Services.AddFundraiseUpClient(options => 
+{
+    options.ApiKey = configuration["FundraiseUp:ApiKey"];
+    options.RateLimitStrategy = RateLimitStrategy.Queue;  // Recommended
+});
+
+// Inject IFundraiseUpClient everywhere
+public class DonationService(IFundraiseUpClient client) 
+{
+    public async Task ProcessAsync() => await client.Donations.Create(request).ExecuteAsync();
+}
+```
+
+**2. Singleton Pattern (If Not Using DI)**
+```csharp
+public static class FundraiseUpClientSingleton
+{
+    private static readonly Lazy<IFundraiseUpClient> _client = new(() => 
+        new FundraiseUpClient(Environment.GetEnvironmentVariable("FUNDRAISEUP_API_KEY")!));
+    
+    public static IFundraiseUpClient Instance => _client.Value;
+}
+```
+
+**3. High-Concurrency Applications**
+```csharp
+builder.Services.AddFundraiseUpClient(options => 
+{
+    options.RateLimitStrategy = RateLimitStrategy.Queue;
+    options.MaxConcurrentRequests = 3;              // FundraiseUp API limit
+    options.MaxQueueSize = 200;                     // Large queue for high traffic
+    options.QueueTimeout = TimeSpan.FromMinutes(5); // Longer timeout
+});
+```
+
+### ⚠️ Common Pitfalls to Avoid
+
+**❌ Multiple Client Instances**
+```csharp
+// DON'T DO THIS - Creates separate rate limiters!
+public class BadService1 
+{
+    private readonly IFundraiseUpClient _client = new FundraiseUpClient("key");
+}
+public class BadService2 
+{
+    private readonly IFundraiseUpClient _client = new FundraiseUpClient("key");
+}
+// Result: Up to 6 concurrent requests (violates API limit)
+```
+
+**❌ Creating Clients in Loops**
+```csharp
+// DON'T DO THIS - Each iteration creates new rate limiter!
+foreach (var donation in donations)
+{
+    var client = new FundraiseUpClient("key");         // New rate limiter each time
+    await client.Donations.Create(donation).ExecuteAsync();
+}
+```
+
+### 🔧 Troubleshooting Rate Limiting
+
+**Issue: Getting RateLimitExceededException with Low Traffic**
+```csharp
+// Check for multiple client instances
+// Solution: Use AddFundraiseUpClient() with DI
+```
+
+**Issue: Requests Queuing Too Long**
+```csharp
+// Increase queue timeout or switch to Retry strategy
+options.QueueTimeout = TimeSpan.FromMinutes(10);
+// OR
+options.RateLimitStrategy = RateLimitStrategy.Retry;
+```
+
+**Issue: High Memory Usage**
+```csharp
+// Reduce queue size for memory-constrained environments
+options.MaxQueueSize = 25;  // Smaller queue
+options.RateLimitStrategy = RateLimitStrategy.Exception;  // No queuing
+```
+
+### 📊 Monitoring Rate Limiting
+
+**Enable Detailed Logging**
+```csharp
+builder.Services.AddFundraiseUpClient(options => 
+{
+    options.LogLevel = LogLevel.Debug;  // See rate limiting events
+});
+```
+
+**Example Log Output**
+```
+[Debug] Acquired rate limit slot. Current requests: 2/3
+[Warning] Rate limit exceeded. Retrying after 1000ms (attempt 2/5)
+[Info] Processing queued request. Current requests: 3/3
+```
+
 ### Configuration File (appsettings.json)
 ```json
 {
@@ -462,7 +680,11 @@ var client = new FundraiseUpClient(
     "MaxRetryAttempts": 3,
     "RetryDelay": "00:00:01",
     "EnableLogging": true,
-    "LogLevel": "Information"
+    "LogLevel": "Information",
+    "RateLimitStrategy": "Queue",
+    "MaxConcurrentRequests": 3,
+    "MaxQueueSize": 100,
+    "QueueTimeout": "00:02:00"
   }
 }
 ```
@@ -473,6 +695,10 @@ FUNDRAISEUP_API_KEY=your-api-key
 FUNDRAISEUP_BASE_URL=https://api.fundraiseup.com
 FUNDRAISEUP_TIMEOUT=30
 FUNDRAISEUP_MAX_RETRY_ATTEMPTS=3
+FUNDRAISEUP_RATE_LIMIT_STRATEGY=Queue
+FUNDRAISEUP_MAX_CONCURRENT_REQUESTS=3
+FUNDRAISEUP_MAX_QUEUE_SIZE=100
+FUNDRAISEUP_QUEUE_TIMEOUT=120
 ```
 
 ## 🔄 Fluent Configuration & Operation Builders
@@ -684,8 +910,9 @@ This library follows constitutional design principles:
 
 - **[Getting Started](docs/getting-started.md)** - Installation and basic setup
 - **[Configuration Guide](docs/configuration.md)** - Comprehensive configuration options
+- **[Rate Limiting & Connection Pooling](docs/RATE_LIMITING_CONNECTION_POOLING.md)** - Advanced guide for high-performance scenarios
 - **[API Reference](docs/api-reference.md)** - Complete method documentation
-- **[Examples](docs/examples.md)** - Common usage patterns and scenarios
+- **[Examples](docs/EXAMPLES.md)** - Common usage patterns and scenarios
 - **[Error Handling](docs/error-handling.md)** - Exception types and handling strategies
 - **[Performance Guide](docs/performance.md)** - Optimization tips and best practices
 

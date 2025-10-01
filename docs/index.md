@@ -1,10 +1,24 @@
+---
+layout: default
+title: Home
+nav_order: 1
+description: "A modern, fluent .NET client library for consuming the FundraiseUp API"
+permalink: /
+---
+
 # FundraiseUp .NET Client Library
 
 [![NuGet](https://img.shields.io/nuget/v/FundraiseUp.Client.svg)](https://www.nuget.org/packages/FundraiseUp.Client)
-[![Build Status](https://github.com/YourOrg/FundraiseUpApi/workflows/CI/badge.svg)](https://github.com/YourOrg/FundraiseUpApi/actions)
-[![License](https://img.shields.io/github/license/YourOrg/FundraiseUpApi.svg)](LICENSE)
+[![Build Status](https://github.com/clmcgrath/FundraiseUpApi/workflows/CI/badge.svg)](https://github.com/clmcgrath/FundraiseUpApi/actions)
+[![License](https://img.shields.io/github/license/clmcgrath/FundraiseUpApi.svg)](https://github.com/clmcgrath/FundraiseUpApi/blob/main/LICENSE)
 
 A modern, fluent .NET client library for consuming the FundraiseUp API with comprehensive support for all endpoints, dependency injection, and enterprise-grade reliability.
+
+{: .fs-6 .fw-300 }
+
+[Get started now](#quick-start){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 } [View it on GitHub](https://github.com/clmcgrath/FundraiseUpApi){: .btn .fs-5 .mb-4 .mb-md-0 }
+
+---
 
 ## ✨ Features
 
@@ -16,7 +30,19 @@ A modern, fluent .NET client library for consuming the FundraiseUp API with comp
 - **Comprehensive Logging** - Structured logging with Microsoft.Extensions.Logging
 - **Secure by Default** - HTTPS enforcement and secure credential management
 
-## 🚀 Quick Start
+## � Documentation
+
+| Section | Description |
+|:--------|:------------|
+| [Getting Started](getting-started.html) | Installation and basic setup |
+| [Configuration](configuration.html) | Comprehensive configuration options |
+| [Rate Limiting & Connection Pooling](RATE_LIMITING_CONNECTION_POOLING.html) | Advanced performance optimization |
+| [Examples](EXAMPLES.html) | Common usage patterns and scenarios |
+| [API Reference](api-reference.html) | Complete method documentation |
+| [Error Handling](error-handling.html) | Exception types and handling strategies |
+| [Performance Guide](performance.html) | Optimization tips and best practices |
+
+## �🚀 Quick Start
 
 ### Installation
 
