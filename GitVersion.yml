@@ -1,32 +1,74 @@
 # Simple GitHub Flow with semantic versioning
 mode: ContinuousDelivery
 
+# Assembly versioning strategy
+assembly-versioning-scheme: MajorMinorPatch
+assembly-file-versioning-scheme: MajorMinorPatchTag
+assembly-informational-format: '{InformationalVersion}'
+
+# Build metadata and commit info
+build-metadata-padding: 4
+commits-since-version-source-padding: 4
+legacy-semver-padding: 4
+major-version-bump-message: '\+semver:\s?(breaking|major)'
+minor-version-bump-message: '\+semver:\s?(feature|minor)'
+patch-version-bump-message: '\+semver:\s?(fix|patch)'
+no-bump-message: '\+semver:\s?(none|skip)'
+
+# Ignore documentation-only changes from versioning
+ignore:
+  sha: []
+  commits-before: null
+  merge-base: null
+  paths:
+    - 'docs/**'
+    - '*.md'
+    - '.github/ISSUE_TEMPLATE/**'
+
 branches:
   # Production releases - stable versions only
   master:
     regex: ^master$|^main$
     increment: Patch
     is-mainline: true
+    source-branches: []
   
   # Development branch - pre-release versions  
   dev:
     regex: ^dev$|^develop$
     tag: 'alpha'
     increment: Minor
+    source-branches: ['master']
+    prevent-increment-of-merged-branch-version: true
+    track-merge-target: false
   
   # Beta branch - release candidates for testing
   beta:
     regex: ^beta$|^release[/-]
     tag: 'beta'
     increment: Patch
+    source-branches: ['dev', 'master']
     
   # Feature branches - inherit version from parent
   feature:
     regex: ^features?[/-]
     tag: useBranchName
     increment: Inherit
+    source-branches: ['dev', 'master']
+    prevent-increment-of-merged-branch-version: false
+    track-merge-target: true
     
   # Hotfix branches - patch releases
   hotfix:
     regex: ^hotfix[/-]
     increment: Patch
+    source-branches: ['master']
+    is-release-branch: true
+    
+  # Pull request branches - temporary versions for CI/CD
+  pull-request:
+    regex: ^(pull|pr)[/-]
+    tag: 'pr'
+    increment: Inherit
+    source-branches: ['dev', 'master', 'feature', 'beta']
+    tag-number-pattern: '[/-](?<number>\d+)'
