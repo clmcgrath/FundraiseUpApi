@@ -19,7 +19,6 @@ no-bump-message: '\+semver:\s?(none|skip)'
 ignore:
   sha: []
   commits-before: null
-  merge-base: null
   paths:
     - 'docs/**'
     - '*.md'
