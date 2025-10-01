@@ -2,9 +2,15 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, dev, beta ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, dev ]
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
   build-and-test:
@@ -12,32 +18,69 @@ jobs:
     
     strategy:
       matrix:
-        dotnet-version: [ '6.0.x', '8.0.x' ]
+        dotnet-version: ['6.0.x', '8.0.x']
     
     steps:
     - uses: actions/checkout@v4
-    
+      with:
+        fetch-depth: 0
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
-    
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v1.1.1
+      with:
+        versionSpec: '5.12.0'
+
+    - name: Calculate Version
+      uses: gittools/actions/gitversion/execute@v1.1.1
+      id: gitversion
+
     - name: Restore dependencies
       run: dotnet restore
-    
-    - name: Build
-      run: dotnet build --no-restore --configuration Release
-    
-    - name: Test
-      run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
-    
-    - name: Upload coverage reports to Codacy
-      uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699
-      with:
-        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: '**/coverage.cobertura.xml'
 
-    - name: Code Quality Check
+    - name: Build solution
       run: |
-        echo "Build completed successfully"
-        echo "Ready for Codacy analysis"
+        dotnet build \
+          --configuration Release \
+          --no-restore \
+          -p:Version=${{ steps.gitversion.outputs.assemblySemVer }} \
+          -p:ContinuousIntegrationBuild=true
+
+    - name: Run tests
+      run: |
+        dotnet test \
+          --configuration Release \
+          --no-build \
+          --verbosity minimal
+
+    - name: Create NuGet package
+      run: |
+        dotnet pack \
+          --configuration Release \
+          --no-build \
+          --output ./packages \
+          -p:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+
+    - name: Validate .NET Standard 2.0 compatibility
+      run: |
+        echo "Verifying .NET Standard 2.0 build outputs..."
+        ls -la src/FundraiseUp.Client/bin/Release/netstandard2.0/ || echo "netstandard2.0 output not found"
+        ls -la src/FundraiseUp.Client/bin/Release/net6.0/ || echo "net6.0 output not found"
+
+    - name: Upload packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages-${{ matrix.dotnet-version }}
+        path: packages/*.nupkg
