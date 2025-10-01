@@ -72,7 +72,7 @@ finally
 
 ### 2. Dependency Injection (Recommended)
 
-For production applications, use dependency injection:
+For production applications, use dependency injection with HttpClientFactory integration:
 
 #### ASP.NET Core / .NET 6+
 ```csharp
@@ -90,6 +90,9 @@ builder.Services.AddFundraiseUpClient(options =>
 
 var app = builder.Build();
 ```
+
+{: .note }
+The `AddFundraiseUpClient` method automatically configures HttpClientFactory for optimal performance, connection pooling, and resource management. See the [HttpClientFactory Integration Guide](httpclientfactory.md) for advanced configuration options.
 
 #### Configuration File
 ```json

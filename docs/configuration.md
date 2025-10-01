@@ -199,6 +199,99 @@ services.AddFundraiseUpClient(options =>
 });
 ```
 
+## HttpClientFactory Integration
+
+The FundraiseUp.Client library is built with full HttpClientFactory support for enterprise-grade HTTP client management.
+
+### Service Registration Architecture
+
+#### Service Lifetime
+- **FundraiseUpClient**: Registered as `Transient` to work well with HttpClientFactory
+- **HttpClient**: Managed by HttpClientFactory with proper connection pooling
+- **Options**: Registered as `Singleton` using IOptions pattern
+
+#### Client Lifecycle Example
+```csharp
+public class DonationService
+{
+    private readonly IFundraiseUpClient _fundraiseUpClient;
+    
+    public DonationService(IFundraiseUpClient fundraiseUpClient)
+    {
+        _fundraiseUpClient = fundraiseUpClient;
+    }
+    
+    public async Task CreateDonationAsync()
+    {
+        var request = new CreateDonationRequest
+        {
+            Amount = "100.00",
+            Currency = "usd",
+            Campaign = "FUN12345678",
+            Designation = "E1234567",
+            PaymentMethod = new PaymentMethodRequest
+            {
+                Stripe = new StripePaymentMethodRequest
+                {
+                    Id = "pm_card_visa"
+                }
+            },
+            Supporter = new SupporterRequest
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                Email = "john.doe@example.com"
+            }
+        };
+        
+        var donation = await _fundraiseUpClient.Donations
+            .Create(request)
+            .ExecuteAsync();
+    }
+}
+```
+
+### Manual HttpClient Usage
+
+If you prefer manual HttpClient management:
+
+```csharp
+// Create your own HttpClient
+using var httpClient = new HttpClient();
+
+// Configure FundraiseUp client with your HttpClient
+var options = new FundraiseUpClientOptions
+{
+    ApiKey = "your-api-key",
+    BaseUrl = "https://api.fundraiseup.com"
+};
+
+using var client = new FundraiseUpClient(options.ApiKey, options, httpClient);
+```
+
+### Important Notes
+
+#### HttpClient Ownership
+- **HttpClientFactory**: The factory manages HttpClient lifecycle - do not dispose manually
+- **Manual Creation**: When you create HttpClient manually, you own its lifecycle
+- **Auto-Detection**: The library automatically detects ownership and handles disposal correctly
+
+#### Configuration Priority
+When using HttpClientFactory, HttpClient configuration happens in service registration:
+
+```csharp
+// ✅ Correct - configure in service registration
+services.AddFundraiseUpClient(options => 
+{
+    options.ApiKey = "key";
+    options.BaseUrl = "https://api.fundraiseup.com";
+});
+
+// ❌ Don't do this - HttpClient is pre-configured by factory
+var client = httpClientFactory.CreateClient();
+client.BaseAddress = new Uri("https://different-url.com"); // This won't work as expected
+```
+
 ### Multiple Clients
 ```csharp
 // Named clients for different environments
