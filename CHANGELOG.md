@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔄 Recent Changes (October 2025)
 
+#### CI/CD & Packaging Enhancements
+- **Automated Release Notes**: CI/CD pipeline now automatically extracts release notes from CHANGELOG.md for NuGet packages
+- **Dual Publishing Strategy**: Packages are now published to both GitHub Packages and NuGet.org
+- **Environment-Based Deployments**: Added development and production environments with proper protection rules
+- **Enhanced GitVersion Configuration**: Complete GitVersion.yml with all branch types, regex patterns, and source-branches
+- **Professional NuGet Package**: Added package icon, comprehensive metadata, and automated versioning
+- **Documentation Exclusions**: GitVersion now ignores documentation-only changes for cleaner version history
+
+#### Project Organization & Quality
+- **Comprehensive Issue Templates**: Added GitHub issue templates for bugs, features, questions, documentation, and code quality
+- **Branching Strategy Documentation**: Complete guide covering Git workflow, version control, and branch management
+- **Updated Roadmap**: Realistic roadmap focused on performance, filtering, and error handling improvements
+- **Professional Package Icon**: Clean, branded icon for NuGet package visibility
+- **Enhanced CI/CD Security**: Pinned GitHub Actions and improved deployment workflows
+
 #### Quality & Monitoring Improvements
 - **Migrated from Codecov to Codacy**: Switched all GitHub Actions workflows to use Codacy for unified code quality analysis and coverage reporting
 - **Enhanced CI/CD Security**: Pinned all GitHub Actions to specific commit SHAs to prevent supply chain attacks
