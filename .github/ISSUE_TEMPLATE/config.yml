@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: FundraiseUp API Documentation
+    url: https://api.fundraiseup.com/
+    about: Official FundraiseUp API documentation
+  - name: Community Discussions
+    url: https://github.com/YourUsername/FundraiseUpApi/discussions
+    about: Ask questions and discuss ideas with the community
