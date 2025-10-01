@@ -105,7 +105,14 @@ namespace FundraiseUp.Client.Tests.Unit.Utilities
     /// </summary>
     public class TestLogger<T> : ILogger<T>
     {
-        public IDisposable BeginScope<TState>(TState state) => null!;
+        private class NullScope : IDisposable
+        {
+            public static readonly NullScope Instance = new NullScope();
+            private NullScope() { }
+            public void Dispose() { }
+        }
+
+        public IDisposable BeginScope<TState>(TState state) => NullScope.Instance;
         public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
         public void Log<TState>(
             Microsoft.Extensions.Logging.LogLevel logLevel,
