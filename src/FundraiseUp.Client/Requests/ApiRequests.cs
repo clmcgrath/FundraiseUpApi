@@ -496,7 +496,7 @@ namespace FundraiseUp.Client.Requests
     /// Note: Campaigns are read-only in FundraiseUp API and cannot be created or updated.
     /// This model exists only to satisfy test compilation.
     /// </summary>
-    [Obsolete("Campaigns cannot be created via FundraiseUp API - they are read-only")]
+    // Note: Campaigns cannot be created via FundraiseUp API - they are read-only.
     public class CreateCampaignRequest
     {
         /// <summary>
