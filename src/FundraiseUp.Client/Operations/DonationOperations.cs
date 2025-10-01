@@ -203,7 +203,7 @@ namespace FundraiseUp.Client.Operations
         {
             // Note: FundraiseUp API has limited filtering capabilities
             // This is kept for compatibility but may not translate to API filters
-            _logger?.LogWarning("Complex where expressions may not be supported by FundraiseUp API");
+            _logger?.LogDebug("Complex where expressions may not be supported by FundraiseUp API");
             return this;
         }
 
