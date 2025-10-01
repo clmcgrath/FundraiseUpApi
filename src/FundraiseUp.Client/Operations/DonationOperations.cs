@@ -246,7 +246,7 @@ namespace FundraiseUp.Client.Operations
         /// <inheritdoc />
         public async Task<PagedResult<DonationResponse>> ExecuteAsync()
         {
-            var queryString = string.Join("&", _queryParameters.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+            var queryString = string.Join("&", _queryParameters.Select(kvp => $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
             var endpoint = string.IsNullOrEmpty(queryString) ? "/v1/donations" : $"/v1/donations?{queryString}";
 
             var response = await _httpClient.GetAsync<DonationsResponse>(endpoint, _correlationId);
