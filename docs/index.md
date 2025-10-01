@@ -104,13 +104,24 @@ public class DonationService
 
 ## 📚 Documentation
 
+### Core Guides
 - [**Getting Started**](getting-started.md) - Installation and basic setup
 - [**Configuration Guide**](configuration.md) - Comprehensive configuration options
 - [**HttpClientFactory Integration**](httpclientfactory.md) - Enterprise HTTP client management
 - [**API Reference**](api-reference.md) - Complete API documentation
-- [**Examples**](examples.md) - Common usage patterns and scenarios
+- [**Examples**](EXAMPLES.md) - Common usage patterns and scenarios
+
+### Advanced Topics
 - [**Error Handling**](error-handling.md) - Exception types and handling strategies
 - [**Performance Guide**](performance.md) - Optimization tips and best practices
+- [**Best Practices**](best-practices.md) - Production-ready patterns and recommendations
+- [**Rate Limiting & Connection Pooling**](RATE_LIMITING_CONNECTION_POOLING.md) - Advanced performance optimization
+
+### Support & Reference
+- [**FAQ**](faq.md) - Frequently asked questions and answers
+- [**Troubleshooting**](troubleshooting.md) - Common issues and solutions
+- [**Migration Guide**](migration-guide.md) - Version upgrade guides
+- [**Changelog**](changelog.md) - Complete version history
 
 ## 🏗️ Architecture
 
