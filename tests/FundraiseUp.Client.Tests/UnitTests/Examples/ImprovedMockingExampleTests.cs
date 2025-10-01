@@ -16,11 +16,6 @@ namespace FundraiseUp.Client.Tests.UnitTests.Examples
     /// </summary>
     public class ImprovedMockingExampleTests
     {
-        // [Fact] - COMMENTED OUT: Campaigns cannot be created via FundraiseUp API - they are managed through dashboard
-        // public async Task CreateCampaign_WithImprovedMocking_ShouldReturnCampaign()
-        // {
-        //     // This test is disabled because campaigns are read-only in FundraiseUp API
-        // }
 
         [Fact(Skip = "Campaigns cannot be listed via API - they are read-only and managed through FundraiseUp dashboard")]
         public async Task ListCampaigns_WithPagination_ShouldReturnPagedResults()
