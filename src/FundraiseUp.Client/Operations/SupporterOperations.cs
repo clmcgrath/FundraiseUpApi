@@ -173,9 +173,7 @@ namespace FundraiseUp.Client.Operations
         /// <inheritdoc />
         public ISupporterSearchOperationBuilder Where(System.Linq.Expressions.Expression<Func<SupporterResponse, bool>> predicate)
         {
-            _logger?.LogWarning("Complex where expressions may not be fully supported by FundraiseUp API. Consider using API-specific filtering methods.");
-            // For now, we'll store the expression but not process it since FundraiseUp API has limited filtering
-            return this;
+            throw new NotSupportedException("Filtering via expressions is not supported by the FundraiseUp API. Please use API-specific filtering methods if available.");
         }
 
         /// <inheritdoc />
