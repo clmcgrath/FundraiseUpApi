@@ -345,7 +345,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
 
             var invalidRequest = new CreateDonationRequest
             {
-                Amount = invalidAmount.ToString(),
+                Amount = invalidAmount.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 Currency = "USD",
                 Supporter = new SupporterRequest
                 {
