@@ -192,11 +192,6 @@ namespace FundraiseUp.Client.Tests.UnitTests
             result.HasNextPage.Should().BeFalse();
         }
 
-        // [Fact] - COMMENTED OUT: Donations are immutable in FundraiseUp API - cannot be updated after creation
-        // public async Task UpdateDonation_WithValidData_ShouldReturnUpdatedDonation()
-        // {
-        //     // This test is disabled because donations cannot be updated in FundraiseUp API
-        // }
 
         [Fact]
         public async Task CreateDonation_WithFluentConfiguration_ShouldApplySettings()
