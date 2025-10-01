@@ -305,7 +305,7 @@ namespace FundraiseUp.Client
     /// Interface for building supporter operations with fluent configuration.
     /// </summary>
     /// <typeparam name="TResult">The result type of the operation.</typeparam>
-    [Obsolete("Use ISupporterOperationBuilder for new code. This interface is maintained for backward compatibility.")]
+    [Obsolete("Use ISupporterOperationBuilder<TResult> instead. IDonorOperationBuilder<TResult> will be removed in v2.0.")]
     public interface IDonorOperationBuilder<TResult>
     {
         /// <summary>
