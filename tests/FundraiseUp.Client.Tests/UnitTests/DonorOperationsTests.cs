@@ -37,12 +37,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
             }, _httpClient, logger.Object);
         }
 
-        // [Fact] - COMMENTED OUT: Supporters cannot be created via FundraiseUp API - they are created automatically with donations
-        // public async Task CreateDonor_WithValidRequest_ShouldReturnDonor()
-        // {
-        //     // This test is disabled because supporters are read-only in FundraiseUp API
-        //     // Supporters are created automatically when donations are made
-        // }
+        // Note: Supporters cannot be created via FundraiseUp API; they are created automatically with donations.
 
         [Fact]
         public async Task GetDonor_WithValidId_ShouldReturnDonor()
