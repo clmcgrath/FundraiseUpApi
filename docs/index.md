@@ -117,6 +117,10 @@ public class DonationService
 - [**Best Practices**](best-practices.md) - Production-ready patterns and recommendations
 - [**Rate Limiting & Connection Pooling**](RATE_LIMITING_CONNECTION_POOLING.md) - Advanced performance optimization
 
+### Development
+- [**Branching Strategy**](branching-strategy.md) - Git workflow and versioning approach
+- [**Testing Guide**](testing.md) - Unit testing patterns and strategies
+
 ### Support & Reference
 - [**FAQ**](faq.md) - Frequently asked questions and answers
 - [**Troubleshooting**](troubleshooting.md) - Common issues and solutions
