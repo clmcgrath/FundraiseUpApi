@@ -34,13 +34,13 @@ A modern, fluent .NET client library for consuming the FundraiseUp API with comp
 
 | Section | Description |
 |:--------|:------------|
-| [Getting Started](getting-started.html) | Installation and basic setup |
-| [Configuration](configuration.html) | Comprehensive configuration options |
-| [Rate Limiting & Connection Pooling](RATE_LIMITING_CONNECTION_POOLING.html) | Advanced performance optimization |
-| [Examples](EXAMPLES.html) | Common usage patterns and scenarios |
-| [API Reference](api-reference.html) | Complete method documentation |
-| [Error Handling](error-handling.html) | Exception types and handling strategies |
-| [Performance Guide](performance.html) | Optimization tips and best practices |
+| [Getting Started](getting-started.md) | Installation and basic setup |
+| [Configuration](configuration.md) | Comprehensive configuration options |
+| [Rate Limiting & Connection Pooling](RATE_LIMITING_CONNECTION_POOLING.md) | Advanced performance optimization |
+| [Examples](EXAMPLES.md) | Common usage patterns and scenarios |
+| [API Reference](api-reference.md) | Complete method documentation |
+| [Error Handling](error-handling.md) | Exception types and handling strategies |
+| [Performance Guide](performance.md) | Optimization tips and best practices |
 
 ## �🚀 Quick Start
 
@@ -119,7 +119,7 @@ public class DonationService
 
 ### Development
 - [**Branching Strategy**](branching-strategy.md) - Git workflow and versioning approach
-- [**Testing Guide**](testing.md) - Unit testing patterns and strategies
+- [**Testing Guide**](../TESTING.md) - Unit testing patterns and strategies
 
 ### Support & Reference
 - [**FAQ**](faq.md) - Frequently asked questions and answers
@@ -151,6 +151,6 @@ This project is licensed under the MIT License - see the [LICENSE](../LICENSE) f
 
 ## 🆘 Support
 
-- [Issues](https://github.com/YourOrg/FundraiseUpApi/issues) - Bug reports and feature requests
-- [Discussions](https://github.com/YourOrg/FundraiseUpApi/discussions) - Community support and questions
-- [Documentation](https://yourorgg.github.io/FundraiseUpApi/) - Comprehensive guides and API reference
+- [Issues](https://github.com/clmcgrath/FundraiseUpApi/issues) - Bug reports and feature requests
+- [Discussions](https://github.com/clmcgrath/FundraiseUpApi/discussions) - Community support and questions
+- [Documentation](https://clmcgrath.github.io/FundraiseUpApi/) - Comprehensive guides and API reference
