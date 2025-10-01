@@ -958,9 +958,9 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## 📈 Roadmap
 
 - [ ] **v1.1** - Advanced filtering and search capabilities
-- [ ] **v1.2** - Webhook support for real-time events
-- [ ] **v1.3** - Bulk operations and batch processing
-- [ ] **v2.0** - GraphQL support and enhanced performance
+- [ ] **v1.2** - Enhanced caching and performance optimizations
+- [ ] **v1.3** - Improved error handling and retry strategies
+- [ ] **v2.0** - Modern .NET features and performance enhancements
 
 ## 🤝 Support & Community
 
