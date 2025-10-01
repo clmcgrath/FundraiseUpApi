@@ -201,10 +201,7 @@ namespace FundraiseUp.Client.Operations
         /// <inheritdoc />
         public IDonationListOperationBuilder Where(Expression<Func<DonationResponse, bool>> predicate)
         {
-            // Note: FundraiseUp API has limited filtering capabilities
-            // This is kept for compatibility but may not translate to API filters
-            _logger?.LogDebug("Complex where expressions may not be supported by FundraiseUp API");
-            return this;
+            throw new NotSupportedException("Arbitrary filtering via Where is not supported by the FundraiseUp API.");
         }
 
         /// <inheritdoc />
