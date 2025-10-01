@@ -1,12 +1,12 @@
 using System;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Xunit;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using FundraiseUp.Client;
 using FundraiseUp.Client.Configuration;
 using FundraiseUp.Client.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Xunit;
 
 namespace FundraiseUp.Client.Tests.Contracts
 {
@@ -165,7 +165,7 @@ namespace FundraiseUp.Client.Tests.Contracts
             client.Should().NotBeNull();
             client.Donations.Should().NotBeNull();
             client.Campaigns.Should().NotBeNull();
-            client.Donors.Should().NotBeNull();
+            client.Supporters.Should().NotBeNull();
         }
 
         [Fact]
@@ -181,7 +181,7 @@ namespace FundraiseUp.Client.Tests.Contracts
             client.Should().NotBeNull();
             client.Donations.Should().NotBeNull();
             client.Campaigns.Should().NotBeNull();
-            client.Donors.Should().NotBeNull();
+            client.Supporters.Should().NotBeNull();
         }
     }
 

@@ -1,14 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using FundraiseUp.Client.Models;
 using FundraiseUp.Client.Requests;
+using Microsoft.Extensions.Logging;
 
 namespace FundraiseUp.Client.Operations
 {
     /// <summary>
-    /// Implementation of donation operations.
+    /// Implementation of donation operations for FundraiseUp API.
     /// </summary>
     internal class DonationOperations : IDonationOperations
     {
@@ -27,20 +28,27 @@ namespace FundraiseUp.Client.Operations
         }
 
         /// <inheritdoc />
-        public IDonationOperationBuilder<Donation> Create(CreateDonationRequest request)
+        public IDonationOperationBuilder<DonationResponse> Create(CreateDonationRequest request)
         {
-            return new DonationOperationBuilder<Donation>(_httpClient, _logger, async (correlationId) =>
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            return new DonationOperationBuilder<DonationResponse>(_httpClient, _logger, async (correlationId) =>
             {
-                return await _httpClient.PostAsync<Donation>("/api/v1/donations", request, correlationId);
+                _logger?.LogInformation("Creating new donation with correlation ID: {CorrelationId}", correlationId);
+                return await _httpClient.PostAsync<DonationResponse>("/v1/donations", request, correlationId);
             });
         }
 
         /// <inheritdoc />
-        public IDonationOperationBuilder<Donation> GetById(string donationId)
+        public IDonationOperationBuilder<DonationResponse> GetById(string donationId)
         {
-            return new DonationOperationBuilder<Donation>(_httpClient, _logger, async (correlationId) =>
+            if (string.IsNullOrWhiteSpace(donationId))
+                throw new ArgumentException("Donation ID cannot be null or empty", nameof(donationId));
+
+            return new DonationOperationBuilder<DonationResponse>(_httpClient, _logger, async (correlationId) =>
             {
-                return await _httpClient.GetAsync<Donation>($"/api/v1/donations/{donationId}", correlationId);
+                return await _httpClient.GetAsync<DonationResponse>($"/v1/donations/{donationId}", correlationId);
             });
         }
 
@@ -51,11 +59,24 @@ namespace FundraiseUp.Client.Operations
         }
 
         /// <inheritdoc />
-        public IDonationOperationBuilder<Donation> Update(string donationId, UpdateDonationRequest request)
+        public IDonationOperationBuilder<DonationResponse> Update(string donationId, UpdateDonationRequest request)
         {
-            return new DonationOperationBuilder<Donation>(_httpClient, _logger, async (correlationId) =>
+            if (string.IsNullOrWhiteSpace(donationId))
+                throw new ArgumentException("Donation ID cannot be null or empty", nameof(donationId));
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            // Validate the update request
+            var validationErrors = request.GetValidationErrors();
+            if (validationErrors.Count > 0)
             {
-                return await _httpClient.PutAsync<Donation>($"/api/v1/donations/{donationId}", request, correlationId);
+                throw new ArgumentException($"Invalid update request: {string.Join("; ", validationErrors)}", nameof(request));
+            }
+
+            return new DonationOperationBuilder<DonationResponse>(_httpClient, _logger, async (correlationId) =>
+            {
+                _logger?.LogInformation("Updating donation {DonationId} with correlation ID: {CorrelationId}", donationId, correlationId);
+                return await _httpClient.PostAsync<DonationResponse>($"/v1/donations/{donationId}", request, correlationId);
             });
         }
     }
@@ -115,12 +136,13 @@ namespace FundraiseUp.Client.Operations
     }
 
     /// <summary>
-    /// Implementation of donation list operation builder.
+    /// Implementation of donation list operation builder for FundraiseUp API.
     /// </summary>
     internal class DonationListOperationBuilder : IDonationListOperationBuilder
     {
         private readonly HttpClientWrapper _httpClient;
         private readonly ILogger? _logger;
+        private readonly Dictionary<string, string> _queryParameters = new();
         private TimeSpan? _timeout;
         private int? _retryCount;
         private string? _correlationId;
@@ -137,24 +159,67 @@ namespace FundraiseUp.Client.Operations
         }
 
         /// <inheritdoc />
-        public IDonationListOperationBuilder Where(Expression<Func<Donation, bool>> predicate)
+        public IDonationListOperationBuilder WithCursor(string cursor)
         {
-            // For now, just return this - actual query building would be implemented here
+            if (!string.IsNullOrWhiteSpace(cursor))
+                _queryParameters["cursor"] = cursor;
             return this;
         }
 
         /// <inheritdoc />
-        public IDonationListOperationBuilder OrderBy<TKey>(Expression<Func<Donation, TKey>> keySelector)
+        public IDonationListOperationBuilder WithLimit(int limit)
         {
-            // For now, just return this - actual query building would be implemented here
+            if (limit > 0 && limit <= 100)
+                _queryParameters["limit"] = limit.ToString();
+            return this;
+        }
+
+        /// <inheritdoc />
+        public IDonationListOperationBuilder ByCampaign(string campaignId)
+        {
+            if (!string.IsNullOrWhiteSpace(campaignId))
+                _queryParameters["campaign_id"] = campaignId;
+            return this;
+        }
+
+        /// <inheritdoc />
+        public IDonationListOperationBuilder BySupporter(string supporterId)
+        {
+            if (!string.IsNullOrWhiteSpace(supporterId))
+                _queryParameters["supporter_id"] = supporterId;
+            return this;
+        }
+
+        /// <inheritdoc />
+        public IDonationListOperationBuilder ByStatus(string status)
+        {
+            if (!string.IsNullOrWhiteSpace(status))
+                _queryParameters["status"] = status;
+            return this;
+        }
+
+        /// <inheritdoc />
+        public IDonationListOperationBuilder Where(Expression<Func<DonationResponse, bool>> predicate)
+        {
+            // Note: FundraiseUp API has limited filtering capabilities
+            // This is kept for compatibility but may not translate to API filters
+            _logger?.LogWarning("Complex where expressions may not be supported by FundraiseUp API");
+            return this;
+        }
+
+        /// <inheritdoc />
+        public IDonationListOperationBuilder OrderBy<TKey>(Expression<Func<DonationResponse, TKey>> keySelector)
+        {
+            // Note: FundraiseUp API has limited sorting capabilities
+            // This is kept for compatibility but may not translate to API sorting
+            _logger?.LogWarning("Custom ordering may not be supported by FundraiseUp API");
             return this;
         }
 
         /// <inheritdoc />
         public IDonationListOperationBuilder Take(int count)
         {
-            // For now, just return this - actual query building would be implemented here
-            return this;
+            return WithLimit(count);
         }
 
         /// <inheritdoc />
@@ -179,10 +244,21 @@ namespace FundraiseUp.Client.Operations
         }
 
         /// <inheritdoc />
-        public async Task<PagedResult<Donation>> ExecuteAsync()
+        public async Task<PagedResult<DonationResponse>> ExecuteAsync()
         {
-            // Mock implementation for now - would build actual query parameters
-            return await _httpClient.GetAsync<PagedResult<Donation>>("/api/v1/donations", _correlationId);
+            var queryString = string.Join("&", _queryParameters.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+            var endpoint = string.IsNullOrEmpty(queryString) ? "/v1/donations" : $"/v1/donations?{queryString}";
+
+            var response = await _httpClient.GetAsync<DonationsResponse>(endpoint, _correlationId);
+
+            // Convert to PagedResult for backward compatibility
+            return new PagedResult<DonationResponse>
+            {
+                Items = response.Data,
+                NextCursor = null, // DonationsResponse uses HasMore instead of cursor
+                HasMore = response.HasMore,
+                PageSize = _queryParameters.ContainsKey("limit") ? int.Parse(_queryParameters["limit"]) : 20
+            };
         }
     }
 }

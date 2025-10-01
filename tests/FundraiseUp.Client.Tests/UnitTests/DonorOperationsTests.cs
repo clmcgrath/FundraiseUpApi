@@ -34,77 +34,12 @@ namespace FundraiseUp.Client.Tests.UnitTests
             }, _httpClient, logger.Object);
         }
 
-        [Fact]
-        public async Task CreateDonor_WithValidRequest_ShouldReturnDonor()
-        {
-            // Arrange
-            var request = new CreateDonorRequest
-            {
-                Email = "john.doe@example.com",
-                FirstName = "John",
-                LastName = "Doe",
-                Phone = "+1-555-123-4567",
-                Address = new Address
-                {
-                    Street = "123 Main St",
-                    City = "New York",
-                    State = "NY",
-                    PostalCode = "10001",
-                    Country = "US"
-                }
-            };
-
-            var expectedDonor = new Donor
-            {
-                Id = "donor-123",
-                Email = "john.doe@example.com",
-                FirstName = "John",
-                LastName = "Doe",
-                Phone = "+1-555-123-4567",
-                Address = new Address
-                {
-                    Street = "123 Main St",
-                    City = "New York",
-                    State = "NY",
-                    PostalCode = "10001",
-                    Country = "US"
-                },
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var jsonResponse = JsonSerializer.Serialize(expectedDonor, JsonConfiguration.DefaultOptions);
-            var httpResponse = new HttpResponseMessage(HttpStatusCode.Created)
-            {
-                Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
-            };
-
-            _httpMessageHandlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
-            // Act
-            var result = await _client.Donors
-                .Create(request)
-                .ExecuteAsync();
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Id.Should().Be("donor-123");
-            result.Email.Should().Be("john.doe@example.com");
-            result.FirstName.Should().Be("John");
-            result.LastName.Should().Be("Doe");
-            result.Phone.Should().Be("+1-555-123-4567");
-            result.Address.Should().NotBeNull();
-            result.Address!.Street.Should().Be("123 Main St");
-            result.Address.City.Should().Be("New York");
-            result.Address.State.Should().Be("NY");
-            result.Address.PostalCode.Should().Be("10001");
-            result.Address.Country.Should().Be("US");
-        }
+        // [Fact] - COMMENTED OUT: Supporters cannot be created via FundraiseUp API - they are created automatically with donations
+        // public async Task CreateDonor_WithValidRequest_ShouldReturnDonor()
+        // {
+        //     // This test is disabled because supporters are read-only in FundraiseUp API
+        //     // Supporters are created automatically when donations are made
+        // }
 
         [Fact]
         public async Task GetDonor_WithValidId_ShouldReturnDonor()
@@ -136,7 +71,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
                 .ReturnsAsync(httpResponse);
 
             // Act
-            var result = await _client.Donors
+            var result = await _client.Supporters
                 .GetById(donorId)
                 .ExecuteAsync();
 
@@ -149,55 +84,11 @@ namespace FundraiseUp.Client.Tests.UnitTests
             result.Phone.Should().Be("+1-555-987-6543");
         }
 
-        [Fact]
-        public async Task UpdateDonor_WithValidData_ShouldReturnUpdatedDonor()
-        {
-            // Arrange
-            var donorId = "donor-789";
-            var updateRequest = new UpdateDonorRequest
-            {
-                FirstName = "Updated John",
-                LastName = "Updated Doe",
-                Phone = "+1-555-111-2222"
-            };
-
-            var expectedDonor = new Donor
-            {
-                Id = donorId,
-                Email = "john.doe@example.com",
-                FirstName = "Updated John",
-                LastName = "Updated Doe",
-                Phone = "+1-555-111-2222",
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            var jsonResponse = JsonSerializer.Serialize(expectedDonor, JsonConfiguration.DefaultOptions);
-            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
-            };
-
-            _httpMessageHandlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
-            // Act
-            var result = await _client.Donors
-                .Update(donorId, updateRequest)
-                .ExecuteAsync();
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Id.Should().Be(donorId);
-            result.Email.Should().Be("john.doe@example.com");
-            result.FirstName.Should().Be("Updated John");
-            result.LastName.Should().Be("Updated Doe");
-            result.Phone.Should().Be("+1-555-111-2222");
-        }
+        // [Fact] - COMMENTED OUT: Supporters cannot be updated via FundraiseUp API - they are read-only
+        // public async Task UpdateDonor_WithValidData_ShouldReturnUpdatedDonor()
+        // {
+        //     // This test is disabled because supporters are read-only in FundraiseUp API
+        // }
 
         [Fact]
         public async Task SearchDonors_WithEmailFilter_ShouldReturnMatchingDonors()
@@ -242,9 +133,9 @@ namespace FundraiseUp.Client.Tests.UnitTests
                 .ReturnsAsync(httpResponse);
 
             // Act
-            var result = await _client.Donors
+            var result = await _client.Supporters
                 .Search()
-                .Where(d => d.Email.Contains("example.com"))
+                .Where(d => d.Email != null && d.Email.Contains("example.com"))
                 .ExecuteAsync();
 
             // Assert
@@ -260,25 +151,25 @@ namespace FundraiseUp.Client.Tests.UnitTests
         {
             // Arrange
             var donorId = "donor-donations";
-            var expectedResult = new PagedResult<Donation>
+            var expectedResult = new PagedResult<DonationResponse>
             {
-                Items = new List<Donation>
+                Items = new List<DonationResponse>
                 {
-                    new Donation
+                    new DonationResponse
                     {
                         Id = "donation-1",
-                        Amount = 100.00m,
+                        Amount = "100.00",
                         Currency = "USD",
-                        Status = DonationStatus.Completed,
-                        DonorId = donorId
+                        Status = DonationStatus.Succeeded,
+                        Supporter = new EmbeddedSupporterResponse { Id = donorId }
                     },
-                    new Donation
+                    new DonationResponse
                     {
                         Id = "donation-2",
-                        Amount = 250.00m,
+                        Amount = "250.00",
                         Currency = "USD",
-                        Status = DonationStatus.Completed,
-                        DonorId = donorId
+                        Status = DonationStatus.Succeeded,
+                        Supporter = new EmbeddedSupporterResponse { Id = donorId }
                     }
                 },
                 TotalCount = 2,
@@ -301,7 +192,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
                 .ReturnsAsync(httpResponse);
 
             // Act
-            var result = await _client.Donors
+            var result = await _client.Supporters
                 .GetDonations(donorId)
                 .Take(10)
                 .ExecuteAsync();
@@ -309,151 +200,28 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Assert
             result.Should().NotBeNull();
             result.Items.Should().HaveCount(2);
-            result.Items.Should().OnlyContain(d => d.DonorId == donorId);
+            result.Items.Should().OnlyContain(d => d.Supporter.Id == donorId);
             result.TotalCount.Should().Be(2);
             result.CurrentPage.Should().Be(1);
             result.PageSize.Should().Be(10);
         }
 
-        [Fact]
-        public async Task GetDonorStatistics_WithValidId_ShouldReturnStats()
-        {
-            // Arrange
-            var donorId = "donor-stats";
-            var expectedStats = new DonorStatistics
-            {
-                DonorId = donorId,
-                TotalDonated = 750.00m,
-                DonationCount = 5,
-                AverageDonation = 150.00m,
+        // [Fact] - COMMENTED OUT: Supporter statistics not available in current FundraiseUp API
+        // public async Task GetDonorStatistics_WithValidId_ShouldReturnStats()
+        // {
+        //     // This test is disabled because supporter statistics are not available in FundraiseUp API
+        // }
 
-                FirstDonationDate = DateTime.UtcNow.AddDays(-90),
-                LastDonationDate = DateTime.UtcNow.AddDays(-5)
-            };
+        // [Fact] - COMMENTED OUT: Supporter merge not available in FundraiseUp API
+        // public async Task MergeDonors_WithValidIds_ShouldReturnMergedDonor()
+        // {
+        //     // This test is disabled because supporter merge is not supported by the API
+        // }
 
-            var jsonResponse = JsonSerializer.Serialize(expectedStats, JsonConfiguration.DefaultOptions);
-            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
-            };
-
-            _httpMessageHandlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
-            // Act
-            var result = await _client.Donors
-                .GetStatistics(donorId)
-                .ExecuteAsync();
-
-            // Assert
-            result.Should().NotBeNull();
-            result.DonorId.Should().Be(donorId);
-            result.TotalDonated.Should().Be(750.00m);
-            result.DonationCount.Should().Be(5);
-            result.AverageDonation.Should().Be(150.00m);
-
-            result.FirstDonationDate.Should().BeCloseTo(DateTime.UtcNow.AddDays(-90), TimeSpan.FromMinutes(1));
-            result.LastDonationDate.Should().BeCloseTo(DateTime.UtcNow.AddDays(-5), TimeSpan.FromMinutes(1));
-        }
-
-        [Fact]
-        public async Task MergeDonors_WithValidIds_ShouldReturnMergedDonor()
-        {
-            // Arrange
-            var primaryDonorId = "donor-primary";
-            var duplicateDonorId = "donor-secondary";
-
-            var expectedDonor = new Donor
-            {
-                Id = "donor-primary",
-                Email = "primary@example.com",
-                FirstName = "Primary",
-                LastName = "Donor",
-                Phone = "+1-555-999-8888",
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            var jsonResponse = JsonSerializer.Serialize(expectedDonor, JsonConfiguration.DefaultOptions);
-            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
-            };
-
-            _httpMessageHandlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
-            // Act
-            var result = await _client.Donors
-                .Merge(primaryDonorId, duplicateDonorId)
-                .ExecuteAsync();
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Id.Should().Be("donor-primary");
-            result.Email.Should().Be("primary@example.com");
-            result.FirstName.Should().Be("Primary");
-            result.LastName.Should().Be("Donor");
-            result.Phone.Should().Be("+1-555-999-8888");
-        }
-
-        [Fact]
-        public async Task DonorOperations_WithFluentConfiguration_ShouldApplySettings()
-        {
-            // Arrange
-            var request = new CreateDonorRequest
-            {
-                Email = "fluent@example.com",
-                FirstName = "Fluent",
-                LastName = "Donor"
-            };
-
-            var expectedDonor = new Donor
-            {
-                Id = "donor-fluent",
-                Email = "fluent@example.com",
-                FirstName = "Fluent",
-                LastName = "Donor",
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var jsonResponse = JsonSerializer.Serialize(expectedDonor, JsonConfiguration.DefaultOptions);
-            var httpResponse = new HttpResponseMessage(HttpStatusCode.Created)
-            {
-                Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
-            };
-
-            _httpMessageHandlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
-            // Act
-            var result = await _client.Donors
-                .Create(request)
-                .WithTimeout(TimeSpan.FromSeconds(45))
-                .WithCorrelationId("donor-correlation-789")
-                .WithRetry(3)
-                .ExecuteAsync();
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Id.Should().Be("donor-fluent");
-            result.Email.Should().Be("fluent@example.com");
-            result.FirstName.Should().Be("Fluent");
-            result.LastName.Should().Be("Donor");
-        }
+        // [Fact] - COMMENTED OUT: Supporters cannot be created via FundraiseUp API - they are created automatically with donations
+        // public async Task DonorOperations_WithFluentConfiguration_ShouldApplySettings()
+        // {
+        //     // This test is disabled because supporters are read-only in FundraiseUp API
+        // }
     }
 }

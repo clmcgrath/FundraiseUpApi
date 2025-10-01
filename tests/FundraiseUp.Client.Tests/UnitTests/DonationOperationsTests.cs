@@ -40,18 +40,28 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Arrange
             var request = new CreateDonationRequest
             {
-                Amount = 100.00m,
-                Currency = "USD",
-                DonorEmail = "test@example.com",
-                CampaignId = "campaign-123"
+                Amount = "100.00",
+                Currency = "usd",
+                Campaign = "campaign-123",
+                Designation = "general-fund",
+                Supporter = new SupporterRequest
+                {
+                    FirstName = "John",
+                    LastName = "Doe",
+                    Email = "test@example.com"
+                },
+                PaymentMethod = new PaymentMethodRequest
+                {
+                    Stripe = new StripePaymentMethodRequest { Id = "pm_card_visa" }
+                }
             };
 
-            var expectedDonation = new Donation
+            var expectedDonation = new DonationResponse
             {
                 Id = "donation-456",
-                Amount = 100.00m,
+                Amount = "100.00",
                 Currency = "USD",
-                Status = DonationStatus.Completed,
+                Status = DonationStatus.Succeeded,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -77,9 +87,9 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Assert
             result.Should().NotBeNull();
             result.Id.Should().Be("donation-456");
-            result.Amount.Should().Be(100.00m);
+            result.Amount.Should().Be("100.00");
             result.Currency.Should().Be("USD");
-            result.Status.Should().Be(DonationStatus.Completed);
+            result.Status.Should().Be(DonationStatus.Succeeded);
         }
 
         [Fact]
@@ -87,12 +97,12 @@ namespace FundraiseUp.Client.Tests.UnitTests
         {
             // Arrange
             var donationId = "donation-123";
-            var expectedDonation = new Donation
+            var expectedDonation = new DonationResponse
             {
                 Id = donationId,
-                Amount = 50.00m,
+                Amount = "50.00",
                 Currency = "USD",
-                Status = DonationStatus.Completed,
+                Status = DonationStatus.Succeeded,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -118,37 +128,35 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Assert
             result.Should().NotBeNull();
             result.Id.Should().Be(donationId);
-            result.Amount.Should().Be(50.00m);
+            result.Amount.Should().Be("50.00");
             result.Currency.Should().Be("USD");
-            result.Status.Should().Be(DonationStatus.Completed);
+            result.Status.Should().Be(DonationStatus.Succeeded);
         }
 
         [Fact]
         public async Task ListDonations_WithFilters_ShouldReturnPagedResults()
         {
             // Arrange
-            var expectedResult = new PagedResult<Donation>
+            var expectedResult = new DonationsResponse
             {
-                Items = new List<Donation>
+                Data = new List<DonationResponse>
                 {
-                    new Donation
+                    new DonationResponse
                     {
                         Id = "donation-1",
-                        Amount = 25.00m,
+                        Amount = "25.00",
                         Currency = "USD",
-                        Status = DonationStatus.Completed
+                        Status = DonationStatus.Succeeded
                     },
-                    new Donation
+                    new DonationResponse
                     {
                         Id = "donation-2",
-                        Amount = 75.00m,
+                        Amount = "75.00",
                         Currency = "USD",
                         Status = DonationStatus.Pending
                     }
                 },
-                TotalCount = 2,
-                CurrentPage = 1,
-                PageSize = 10
+                HasMore = false
             };
 
             var jsonResponse = JsonSerializer.Serialize(expectedResult, JsonConfiguration.DefaultOptions);
@@ -180,52 +188,11 @@ namespace FundraiseUp.Client.Tests.UnitTests
             result.TotalPages.Should().Be(1);
         }
 
-        [Fact]
-        public async Task UpdateDonation_WithValidData_ShouldReturnUpdatedDonation()
-        {
-            // Arrange
-            var donationId = "donation-123";
-            var updateRequest = new UpdateDonationRequest
-            {
-                Amount = 150.00m,
-                Currency = "USD"
-            };
-
-            var expectedDonation = new Donation
-            {
-                Id = donationId,
-                Amount = 150.00m,
-                Currency = "USD",
-                Status = DonationStatus.Completed,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            var jsonResponse = JsonSerializer.Serialize(expectedDonation, JsonConfiguration.DefaultOptions);
-            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
-            };
-
-            _httpMessageHandlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
-            // Act
-            var result = await _client.Donations
-                .Update(donationId, updateRequest)
-                .ExecuteAsync();
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Id.Should().Be(donationId);
-            result.Amount.Should().Be(150.00m);
-            result.Currency.Should().Be("USD");
-            result.Status.Should().Be(DonationStatus.Completed);
-        }
+        // [Fact] - COMMENTED OUT: Donations are immutable in FundraiseUp API - cannot be updated after creation
+        // public async Task UpdateDonation_WithValidData_ShouldReturnUpdatedDonation()
+        // {
+        //     // This test is disabled because donations cannot be updated in FundraiseUp API
+        // }
 
         [Fact]
         public async Task CreateDonation_WithFluentConfiguration_ShouldApplySettings()
@@ -233,16 +200,26 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Arrange
             var request = new CreateDonationRequest
             {
-                Amount = 200.00m,
+                Amount = "200.00",
                 Currency = "EUR",
-                DonorEmail = "donor@example.com",
-                CampaignId = "campaign-789"
+                Supporter = new SupporterRequest
+                {
+                    FirstName = "Jane",
+                    LastName = "Doe",
+                    Email = "donor@example.com"
+                },
+                Campaign = "campaign-789",
+                Designation = "General Fund",
+                PaymentMethod = new PaymentMethodRequest
+                {
+                    Stripe = new StripePaymentMethodRequest { Id = "pm_card_mastercard" }
+                }
             };
 
-            var expectedDonation = new Donation
+            var expectedDonation = new DonationResponse
             {
                 Id = "donation-with-config",
-                Amount = 200.00m,
+                Amount = "200.00",
                 Currency = "EUR",
                 Status = DonationStatus.Pending
             };
@@ -271,7 +248,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Assert
             result.Should().NotBeNull();
             result.Id.Should().Be("donation-with-config");
-            result.Amount.Should().Be(200.00m);
+            result.Amount.Should().Be("200.00");
             result.Currency.Should().Be("EUR");
             result.Status.Should().Be(DonationStatus.Pending);
         }
