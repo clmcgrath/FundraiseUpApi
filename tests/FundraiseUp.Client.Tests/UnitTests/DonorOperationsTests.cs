@@ -133,7 +133,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Act
             var result = await _client.Supporters
                 .Search()
-                .Where(d => d.Email != null && d.Email.Contains("example.com"))
+                .Where(d => d.Email?.Contains("example.com") == true)
                 .ExecuteAsync();
 
             // Assert
