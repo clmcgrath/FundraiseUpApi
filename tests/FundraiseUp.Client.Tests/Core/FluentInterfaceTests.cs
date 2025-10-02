@@ -9,22 +9,13 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace FundraiseUp.Client.Tests.UnitTests.Examples
+namespace FundraiseUp.Client.Tests.Core
 {
     /// <summary>
     /// Example showing improved mocking approach for contributors without API keys
     /// </summary>
     public class ImprovedMockingExampleTests
     {
-
-        [Fact(Skip = "Campaigns cannot be listed via API - they are read-only and managed through FundraiseUp dashboard")]
-        public async Task ListCampaigns_WithPagination_ShouldReturnPagedResults()
-        {
-            // NOTE: This test is skipped because the FundraiseUp API does not support listing campaigns.
-            // Campaigns are managed through the FundraiseUp dashboard and are read-only via the API.
-            // Campaign data is only available embedded within donation, supporter, and other entity responses.
-            await Task.CompletedTask;
-        }
 
         [Fact]
         public async Task CreateDonation_WithValidationError_ShouldThrowValidationException()
