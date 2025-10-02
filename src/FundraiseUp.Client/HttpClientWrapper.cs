@@ -80,13 +80,13 @@ namespace FundraiseUp.Client
         /// <returns>The deserialized response.</returns>
         public async Task<T> GetAsync<T>(string endpoint, string? correlationId = null)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
             if (!string.IsNullOrEmpty(correlationId))
             {
                 request.Headers.Add("X-Correlation-ID", correlationId);
             }
 
-            var response = await _httpClient.SendAsync(request);
+            using var response = await _httpClient.SendAsync(request);
             var content = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
@@ -110,14 +110,14 @@ namespace FundraiseUp.Client
         {
             var json = JsonSerializer.Serialize(data, JsonConfiguration.DefaultOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var request = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = content };
+            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = content };
+            
             if (!string.IsNullOrEmpty(correlationId))
             {
                 request.Headers.Add("X-Correlation-ID", correlationId);
             }
 
-            var response = await _httpClient.SendAsync(request);
+            using var response = await _httpClient.SendAsync(request);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
@@ -141,14 +141,14 @@ namespace FundraiseUp.Client
         {
             var json = JsonSerializer.Serialize(data, JsonConfiguration.DefaultOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var request = new HttpRequestMessage(HttpMethod.Put, endpoint) { Content = content };
+            using var request = new HttpRequestMessage(HttpMethod.Put, endpoint) { Content = content };
+            
             if (!string.IsNullOrEmpty(correlationId))
             {
                 request.Headers.Add("X-Correlation-ID", correlationId);
             }
 
-            var response = await _httpClient.SendAsync(request);
+            using var response = await _httpClient.SendAsync(request);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)

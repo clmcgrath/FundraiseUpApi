@@ -214,11 +214,26 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// </summary>
         public HttpMockBuilder AddSuccessResponse(string content = "{\"success\": true}")
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json")
-            };
-            return SetupAnyRequest(response);
+            _mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .Returns((HttpRequestMessage request, CancellationToken cancellationToken) =>
+                {
+                    Interlocked.Increment(ref _callCount);
+                    _requests.Add(request);
+                    
+                    // Create a new response for each request to avoid sharing
+                    var response = new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json")
+                    };
+                    return Task.FromResult(response);
+                });
+
+            return this;
         }
 
         /// <summary>
@@ -226,11 +241,27 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// </summary>
         public HttpMockBuilder AddDelayedSuccessResponse(TimeSpan delay, string content = "{\"success\": true}")
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json")
-            };
-            return SetupDelayedRequest(delay, response);
+            // Create a factory function that returns a new response each time
+            _mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .Returns(async (HttpRequestMessage request, CancellationToken cancellationToken) =>
+                {
+                    await Task.Delay(delay, cancellationToken);
+                    Interlocked.Increment(ref _callCount);
+                    _requests.Add(request);
+                    
+                    // Create a new response for each request to avoid sharing
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json")
+                    };
+                });
+
+            return this;
         }
 
         /// <summary>
@@ -238,11 +269,31 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// </summary>
         public HttpMockBuilder AddVariableLatencyResponse(TimeSpan minDelay, TimeSpan maxDelay, string content = "{\"success\": true}")
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json")
-            };
-            return SetupVariableLatencyRequest(minDelay, maxDelay, response);
+            var random = new Random();
+            
+            _mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .Returns(async (HttpRequestMessage request, CancellationToken cancellationToken) =>
+                {
+                    // Generate random delay between min and max
+                    var delayMs = random.Next((int)minDelay.TotalMilliseconds, (int)maxDelay.TotalMilliseconds);
+                    await Task.Delay(delayMs, cancellationToken);
+                    
+                    Interlocked.Increment(ref _callCount);
+                    _requests.Add(request);
+                    
+                    // Create a new response for each request to avoid sharing
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json")
+                    };
+                });
+
+            return this;
         }
 
         /// <summary>
