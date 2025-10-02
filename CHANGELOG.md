@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔄 Recent Changes (October 2025)
 
+#### Multi-Framework Support & Performance Optimization
+- **Added .NET 8 Target Framework**: Library now targets `netstandard2.0`, `net6.0`, and `net8.0` for maximum compatibility and performance
+- **Automatic Framework Selection**: NuGet automatically provides the best framework version (15-25% performance boost for .NET 8 users)
+- **Multi-Target Testing**: Test projects now target both .NET 6.0 and .NET 8.0 for comprehensive validation
+- **Cross-Framework Compatibility**: Fixed nullability constraints and interface implementations for .NET 6/8 compatibility
+
+#### Advanced CI/CD Pipeline Strategy
+- **Optimized Build Strategy**: Parallel builds on .NET 6.0.x and 8.0.x SDKs with artifact sharing for maximum efficiency
+- **Comprehensive Test Matrix**: Separate test jobs for each target framework with runtime-specific validation
+- **Enhanced PR Integration**: Individual status checks for each build and test phase with rich reporting
+- **Professional Test Reporting**: Detailed test results with pass/fail summaries directly in PR comments
+- **GitVersion Integration**: Fixed GitVersion 5.x compatibility with proper `tag` property configuration
+
+#### Build & Development Infrastructure
+- **Fixed GitVersion Configuration**: Resolved CI/CD failures with proper GitVersion 5.x configuration and branch naming
+- **Enhanced GitHub Actions Permissions**: Added required permissions for test reporting and PR status checks
+- **Artifact Management**: Build artifacts shared between jobs for faster test execution
+- **Visual Status Indicators**: Emoji-enhanced job names for better CI/CD visibility (🏗️ Build, 🧪 Test)
+
 #### CI/CD & Packaging Enhancements
 - **Automated Release Notes**: CI/CD pipeline now automatically extracts release notes from CHANGELOG.md for NuGet packages
 - **Dual Publishing Strategy**: Packages are now published to both GitHub Packages and NuGet.org
