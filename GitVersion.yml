@@ -1,5 +1,7 @@
 mode: ContinuousDelivery
-next-version: 1.0.0
+tag-prefix: 'v'
+update-build-number: false
+tag-pre-release-weight: 60000
 major-version-bump-message: '\+semver:\s?(breaking|major)'
 minor-version-bump-message: '\+semver:\s?(feature|minor)'
 patch-version-bump-message: '\+semver:\s?(fix|patch)'
@@ -12,8 +14,6 @@ branches:
     increment: Patch
     regex: ^master$
     is-release-branch: true
-    is-main-branch: true
-    source-branches: []
     
   stable:
     label: rc
@@ -22,35 +22,33 @@ branches:
     is-release-branch: true
     source-branches: ['master']
     
-  dev:
+  develop:
     label: beta
     increment: Minor
     regex: ^dev$|^develop$
-    source-branches: ['master', 'stable']
+    source-branches: ['master']
     
   feature:
     label: alpha
     increment: Minor
     regex: ^feature[/-]
-    source-branches: ['dev', 'master', 'stable']
+    source-branches: ['develop', 'master']
     
   hotfix:
     label: hotfix
     increment: Patch
     regex: ^hotfix[/-]
-    source-branches: ['master', 'stable']
-    is-release-branch: false
+    source-branches: ['master']
     
   support:
     label: support
     increment: None
     regex: ^support[/-]
-    source-branches: ['master', 'stable']
-    is-release-branch: false
+    source-branches: ['master']
     
   release:
     label: rc
     increment: None
     regex: ^release[/-]
-    source-branches: ['dev']
+    source-branches: ['develop']
     is-release-branch: true
