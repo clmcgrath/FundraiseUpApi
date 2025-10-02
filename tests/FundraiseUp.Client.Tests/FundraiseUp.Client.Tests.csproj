@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>10.0</LangVersion>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <LangVersion>12.0</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
@@ -31,7 +31,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FundraiseUp.Client\FundraiseUp.Client.csproj" />
-    <ProjectReference Include="..\FundraiseUp.Client.TestHelpers\FundraiseUp.Client.TestHelpers.csproj" />
   </ItemGroup>
 
   <ItemGroup>

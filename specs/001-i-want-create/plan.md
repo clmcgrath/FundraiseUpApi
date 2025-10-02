@@ -224,5 +224,41 @@ tests/
 - [x] All NEEDS CLARIFICATION resolved
 - [x] Complexity deviations documented (none required)
 
+## Post-Release Roadmap
+
+### TODO: Integration Tests (High Priority)
+
+**Status**: Blocked - Pending API Access  
+**Phase**: Post-Implementation (Phase 6)
+
+Once API access is available, comprehensive integration tests need to be implemented:
+
+#### Integration Test Requirements:
+- [ ] **Create separate integration test project** (`FundraiseUp.Client.IntegrationTests`)
+- [ ] **Configure CI/CD skip conditions** - Integration tests should be skipped in automated pipelines
+- [ ] **Add test configuration** for API keys and test environment settings
+- [ ] **Real API endpoint tests** against FundraiseUp sandbox/test environment
+- [ ] **End-to-end donation flow testing** with real Stripe test payment methods
+- [ ] **Rate limiting and error handling validation** with actual API responses
+- [ ] **Data consistency verification** between our models and API responses
+
+#### Test Categories to Implement:
+1. **Donation Operations** - Create, retrieve, list, update donations
+2. **Supporter Operations** - Retrieve and list supporters (read-only)
+3. **Fundraiser Operations** - Create, retrieve, list, update fundraisers  
+4. **Recurring Plan Operations** - Retrieve and list recurring plans
+5. **Event Operations** - Retrieve audit log events
+6. **Donor Portal Operations** - Create access links
+7. **Error Handling** - API errors, rate limiting, authentication failures
+8. **Edge Cases** - Large datasets, pagination, filtering
+
+#### Integration Test Configuration:
+- Use `[Trait("Category", "Integration")]` to mark integration tests
+- Skip in CI/CD with conditional compilation or test filters
+- Require explicit opt-in to run (e.g., environment variable `RUN_INTEGRATION_TESTS=true`)
+- Separate configuration file for API credentials and test settings
+
+**Dependencies**: Complete Phase 4 implementation and unit test fixes before implementing integration tests.
+
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*

@@ -21,13 +21,33 @@ namespace FundraiseUp.Client
         ICampaignOperations Campaigns { get; }
 
         /// <summary>
-        /// Gets the donor operations client.
+        /// Gets the supporter operations client.
         /// </summary>
-        IDonorOperations Donors { get; }
+        ISupporterOperations Supporters { get; }
+
+        /// <summary>
+        /// Gets the recurring plan operations client.
+        /// </summary>
+        IRecurringPlanOperations RecurringPlans { get; }
+
+        /// <summary>
+        /// Gets the events (audit log) operations client.
+        /// </summary>
+        IEventOperations Events { get; }
+
+        /// <summary>
+        /// Gets the fundraiser operations client.
+        /// </summary>
+        IFundraiserOperations Fundraisers { get; }
+
+        /// <summary>
+        /// Gets the donor portal operations client.
+        /// </summary>
+        IDonorPortalOperations DonorPortal { get; }
     }
 
     /// <summary>
-    /// Interface for donation operations.
+    /// Interface for donation operations in FundraiseUp API.
     /// </summary>
     public interface IDonationOperations
     {
@@ -36,131 +56,172 @@ namespace FundraiseUp.Client
         /// </summary>
         /// <param name="request">The donation creation request.</param>
         /// <returns>A donation operation builder.</returns>
-        IDonationOperationBuilder<Donation> Create(CreateDonationRequest request);
+        IDonationOperationBuilder<DonationResponse> Create(CreateDonationRequest request);
 
         /// <summary>
         /// Gets a donation by its identifier.
         /// </summary>
-        /// <param name="donationId">The donation identifier.</param>
+        /// <param name="donationId">The donation identifier (format: D[A-Z]{8}).</param>
         /// <returns>A donation operation builder.</returns>
-        IDonationOperationBuilder<Donation> GetById(string donationId);
+        IDonationOperationBuilder<DonationResponse> GetById(string donationId);
 
         /// <summary>
-        /// Lists donations with optional filtering.
+        /// Lists donations with optional filtering using cursor-based pagination.
         /// </summary>
         /// <returns>A donation list operation builder.</returns>
         IDonationListOperationBuilder List();
 
         /// <summary>
-        /// Updates an existing donation.
+        /// Updates an existing donation. Only works for API-created donations within 24 hours of creation.
         /// </summary>
-        /// <param name="donationId">The donation identifier.</param>
-        /// <param name="request">The update request.</param>
+        /// <param name="donationId">The donation identifier (format: D[A-Z]{8}).</param>
+        /// <param name="request">The donation update request.</param>
         /// <returns>A donation operation builder.</returns>
-        IDonationOperationBuilder<Donation> Update(string donationId, UpdateDonationRequest request);
+        IDonationOperationBuilder<DonationResponse> Update(string donationId, UpdateDonationRequest request);
     }
 
     /// <summary>
-    /// Interface for campaign operations.
+    /// Interface for campaign operations in FundraiseUp API.
+    /// Note: FundraiseUp API does not provide direct campaign endpoints.
+    /// Campaign data is only available embedded within donation, supporter, and other entity responses.
+    /// Campaign management must be done through the FundraiseUp Dashboard.
     /// </summary>
     public interface ICampaignOperations
     {
-        /// <summary>
-        /// Creates a new campaign builder for the specified request.
-        /// </summary>
-        /// <param name="request">The campaign creation request.</param>
-        /// <returns>A campaign operation builder.</returns>
-        ICampaignOperationBuilder<Campaign> Create(CreateCampaignRequest request);
-
-        /// <summary>
-        /// Gets a campaign by its identifier.
-        /// </summary>
-        /// <param name="campaignId">The campaign identifier.</param>
-        /// <returns>A campaign operation builder.</returns>
-        ICampaignOperationBuilder<Campaign> GetById(string campaignId);
-
-        /// <summary>
-        /// Lists campaigns with optional filtering.
-        /// </summary>
-        /// <returns>A campaign list operation builder.</returns>
-        ICampaignListOperationBuilder List();
-
-        /// <summary>
-        /// Updates an existing campaign.
-        /// </summary>
-        /// <param name="campaignId">The campaign identifier.</param>
-        /// <param name="request">The update request.</param>
-        /// <returns>A campaign operation builder.</returns>
-        ICampaignOperationBuilder<Campaign> Update(string campaignId, UpdateCampaignRequest request);
-
-        /// <summary>
-        /// Gets statistics for a campaign.
-        /// </summary>
-        /// <param name="campaignId">The campaign identifier.</param>
-        /// <returns>A campaign statistics operation builder.</returns>
-        ICampaignOperationBuilder<CampaignStatistics> GetStatistics(string campaignId);
-
-        /// <summary>
-        /// Activates a campaign.
-        /// </summary>
-        /// <param name="campaignId">The campaign identifier.</param>
-        /// <returns>A campaign operation builder.</returns>
-        ICampaignOperationBuilder<Campaign> Activate(string campaignId);
+        // No operations available - campaigns are only accessible as embedded data
+        // within other API responses (donations, supporters, etc.)
     }
 
     /// <summary>
-    /// Interface for donor operations.
+    /// Interface for supporter operations in FundraiseUp API.
+    /// Note: Supporters are read-only in the FundraiseUp API and cannot be created or modified directly.
+    /// They are created automatically when donations are made.
     /// </summary>
+    [Obsolete("Use ISupporterOperations for new code. This interface is maintained for backward compatibility.")]
     public interface IDonorOperations
     {
         /// <summary>
-        /// Creates a new donor builder for the specified request.
+        /// Gets a supporter by their identifier.
         /// </summary>
-        /// <param name="request">The donor creation request.</param>
-        /// <returns>A donor operation builder.</returns>
-        IDonorOperationBuilder<Donor> Create(CreateDonorRequest request);
+        /// <param name="supporterId">The supporter identifier (format: S[A-Z]{8}).</param>
+        /// <returns>A supporter operation builder.</returns>
+        IDonorOperationBuilder<Donor> GetById(string supporterId);
 
         /// <summary>
-        /// Gets a donor by their identifier.
+        /// Lists supporters with optional filtering using cursor-based pagination.
         /// </summary>
-        /// <param name="donorId">The donor identifier.</param>
-        /// <returns>A donor operation builder.</returns>
-        IDonorOperationBuilder<Donor> GetById(string donorId);
-
-        /// <summary>
-        /// Searches for donors with optional filtering.
-        /// </summary>
-        /// <returns>A donor search operation builder.</returns>
+        /// <returns>A supporter list operation builder.</returns>
         IDonorSearchOperationBuilder Search();
 
         /// <summary>
-        /// Updates an existing donor.
+        /// Gets donations for a specific supporter.
         /// </summary>
-        /// <param name="donorId">The donor identifier.</param>
-        /// <param name="request">The update request.</param>
-        /// <returns>A donor operation builder.</returns>
-        IDonorOperationBuilder<Donor> Update(string donorId, UpdateDonorRequest request);
-
-        /// <summary>
-        /// Gets donations for a specific donor.
-        /// </summary>
-        /// <param name="donorId">The donor identifier.</param>
+        /// <param name="supporterId">The supporter identifier.</param>
         /// <returns>A donation list operation builder.</returns>
-        IDonationListOperationBuilder GetDonations(string donorId);
+        IDonationListOperationBuilder GetDonations(string supporterId);
+    }
+
+    /// <summary>
+    /// Interface for supporter operations in FundraiseUp API.
+    /// Note: Supporters are read-only in the FundraiseUp API and cannot be created or modified directly.
+    /// They are created automatically when donations are made.
+    /// </summary>
+    public interface ISupporterOperations
+    {
+        /// <summary>
+        /// Gets a supporter by their identifier.
+        /// </summary>
+        /// <param name="supporterId">The supporter identifier (format: S[A-Z]{8}).</param>
+        /// <returns>A supporter operation builder.</returns>
+        ISupporterOperationBuilder<SupporterResponse> GetById(string supporterId);
 
         /// <summary>
-        /// Gets statistics for a donor.
+        /// Lists supporters with optional filtering using cursor-based pagination.
         /// </summary>
-        /// <param name="donorId">The donor identifier.</param>
-        /// <returns>A donor statistics operation builder.</returns>
-        IDonorOperationBuilder<DonorStatistics> GetStatistics(string donorId);
+        /// <returns>A supporter list operation builder.</returns>
+        ISupporterSearchOperationBuilder Search();
 
         /// <summary>
-        /// Merges two donor records.
+        /// Gets donations for a specific supporter.
         /// </summary>
-        /// <param name="primaryDonorId">The primary donor identifier.</param>
-        /// <param name="duplicateDonorId">The duplicate donor identifier to merge.</param>
-        /// <returns>A donor operation builder.</returns>
-        IDonorOperationBuilder<Donor> Merge(string primaryDonorId, string duplicateDonorId);
+        /// <param name="supporterId">The supporter identifier.</param>
+        /// <returns>A donation list operation builder.</returns>
+        IDonationListOperationBuilder GetDonations(string supporterId);
+    }
+
+    /// <summary>
+    /// Interface for recurring plan operations in FundraiseUp API.
+    /// Note: Recurring plans are read-only in the FundraiseUp API and cannot be created or modified directly.
+    /// They are created automatically when donations include recurring plan parameters.
+    /// </summary>
+    public interface IRecurringPlanOperations
+    {
+        /// <summary>
+        /// Gets a recurring plan by its identifier.
+        /// </summary>
+        /// <param name="recurringPlanId">The recurring plan identifier (format: R[A-Z]{8}).</param>
+        /// <returns>A recurring plan operation builder.</returns>
+        IRecurringPlanOperationBuilder<RecurringPlanResponse> GetById(string recurringPlanId);
+
+        /// <summary>
+        /// Lists recurring plans with optional filtering using cursor-based pagination.
+        /// </summary>
+        /// <returns>A recurring plan search operation builder.</returns>
+        IRecurringPlanSearchOperationBuilder Search();
+    }
+
+    /// <summary>
+    /// Interface for event operations in FundraiseUp API.
+    /// Events are read-only audit log records of all significant actions in the system.
+    /// </summary>
+    public interface IEventOperations
+    {
+        /// <summary>
+        /// Gets an event by its identifier.
+        /// </summary>
+        /// <param name="eventId">The event identifier (format: EVT[A-Z]{8}).</param>
+        /// <returns>An event operation builder.</returns>
+        IEventOperationBuilder<EventResponse> GetById(string eventId);
+
+        /// <summary>
+        /// Lists events with optional filtering using cursor-based pagination.
+        /// </summary>
+        /// <returns>An event search operation builder.</returns>
+        IEventSearchOperationBuilder Search();
+    }
+
+    /// <summary>
+    /// Interface for fundraiser operations in FundraiseUp API.
+    /// Fundraisers can be created, updated, and retrieved through these operations.
+    /// </summary>
+    public interface IFundraiserOperations
+    {
+        /// <summary>
+        /// Creates a new fundraiser.
+        /// </summary>
+        /// <param name="request">The fundraiser creation request.</param>
+        /// <returns>A fundraiser operation builder.</returns>
+        IFundraiserOperationBuilder<FundraiserResponse> Create(CreateFundraiserRequest request);
+
+        /// <summary>
+        /// Gets a fundraiser by its identifier.
+        /// </summary>
+        /// <param name="fundraiserId">The fundraiser identifier (format: FND[A-Z]{8}).</param>
+        /// <returns>A fundraiser operation builder.</returns>
+        IFundraiserOperationBuilder<FundraiserResponse> GetById(string fundraiserId);
+
+        /// <summary>
+        /// Updates an existing fundraiser.
+        /// </summary>
+        /// <param name="fundraiserId">The fundraiser identifier.</param>
+        /// <param name="request">The fundraiser update request.</param>
+        /// <returns>A fundraiser operation builder.</returns>
+        IFundraiserOperationBuilder<FundraiserResponse> Update(string fundraiserId, UpdateFundraiserRequest request);
+
+        /// <summary>
+        /// Lists fundraisers with optional filtering using cursor-based pagination.
+        /// </summary>
+        /// <returns>A fundraiser search operation builder.</returns>
+        IFundraiserSearchOperationBuilder Search();
     }
 }

@@ -1,7 +1,7 @@
 using System;
-using Microsoft.Extensions.Logging;
 using FundraiseUp.Client.Configuration;
 using FundraiseUp.Client.Operations;
+using Microsoft.Extensions.Logging;
 
 namespace FundraiseUp.Client
 {
@@ -39,7 +39,11 @@ namespace FundraiseUp.Client
 
             Donations = new DonationOperations(_httpClient, logger);
             Campaigns = new CampaignOperations(_httpClient, logger);
-            Donors = new DonorOperations(_httpClient, logger);
+            Supporters = new SupporterOperations(_httpClient, logger);
+            RecurringPlans = new RecurringPlanOperations(_httpClient, logger);
+            Events = new EventOperations(_httpClient, logger);
+            Fundraisers = new FundraiserOperations(_httpClient, logger);
+            DonorPortal = new DonorPortalOperations(_httpClient, logger);
         }
 
         /// <summary>
@@ -60,7 +64,11 @@ namespace FundraiseUp.Client
 
             Donations = new DonationOperations(_httpClient, logger);
             Campaigns = new CampaignOperations(_httpClient, logger);
-            Donors = new DonorOperations(_httpClient, logger);
+            Supporters = new SupporterOperations(_httpClient, logger);
+            RecurringPlans = new RecurringPlanOperations(_httpClient, logger);
+            Events = new EventOperations(_httpClient, logger);
+            Fundraisers = new FundraiserOperations(_httpClient, logger);
+            DonorPortal = new DonorPortalOperations(_httpClient, logger);
         }
 
         /// <inheritdoc />
@@ -70,7 +78,19 @@ namespace FundraiseUp.Client
         public ICampaignOperations Campaigns { get; }
 
         /// <inheritdoc />
-        public IDonorOperations Donors { get; }
+        public ISupporterOperations Supporters { get; }
+
+        /// <inheritdoc />
+        public IRecurringPlanOperations RecurringPlans { get; }
+
+        /// <inheritdoc />
+        public IEventOperations Events { get; }
+
+        /// <inheritdoc />
+        public IFundraiserOperations Fundraisers { get; }
+
+        /// <inheritdoc />
+        public IDonorPortalOperations DonorPortal { get; }
 
         /// <inheritdoc />
         public void Dispose()

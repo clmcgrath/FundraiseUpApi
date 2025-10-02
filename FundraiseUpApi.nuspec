@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>FundraiseUpApi</id>
+    <version>$version$</version>
+    <title>FundraiseUp API Client</title>
+    <authors>Your Name</authors>
+    <owners>Your Name</owners>
+    <description>A comprehensive C# client library for the FundraiseUp API, providing easy access to donations, campaigns, and fundraising data with built-in rate limiting and error handling.</description>
+    <summary>Official C# client library for FundraiseUp API with rate limiting, retry logic, and comprehensive error handling.</summary>
+    <releaseNotes>
+      🚀 MAJOR RELEASE - Complete FundraiseUp API Client Library
+      
+      ⚡ Rate Limiting &amp; Performance:
+      - Thread-safe rate limiting with Queue/Retry/Exception strategies
+      - HttpClientFactory integration with connection pooling support
+      - Respects FundraiseUp's 3 concurrent request limit across all threads
+      
+      🔧 API Specification Alignment:
+      - Complete model rewrite matching actual FundraiseUp API
+      - All response models updated with correct field mappings
+      - Proper JSON serialization with JsonPropertyName attributes
+      - Cursor-based pagination support
+      
+      🎯 New API Operations:
+      - Events operations for audit logs and system events
+      - Fundraiser operations with full CRUD support
+      - Recurring plan operations for subscription management
+      - Donor portal operations for secure access links
+      
+      📚 Enterprise Documentation:
+      - Professional Jekyll documentation site with search
+      - Comprehensive guides for setup, configuration, and best practices
+      - Advanced testing documentation with mocking examples
+      - Troubleshooting guides and FAQ section
+      
+      🔒 Quality &amp; Security:
+      - 37 unit tests with 100% pass rate
+      - Migrated to Codacy for unified quality analysis
+      - Enhanced CI/CD security with pinned commit SHAs
+      - Comprehensive error handling and logging
+      
+      💻 Developer Experience:
+      - Fluent API design with method chaining
+      - Native dependency injection support
+      - Async/await patterns throughout
+      - Professional documentation and examples
+    </releaseNotes>
+    <copyright>Copyright © 2025</copyright>
+    <language>en-US</language>
+    <projectUrl>https://github.com/clmcgrath/FundraiseUpApi</projectUrl>
+    <repository type="git" url="https://github.com/clmcgrath/FundraiseUpApi" />
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <tags>fundraiseup api client donations fundraising rest http</tags>
+    <readme>README.md</readme>
+    <icon>icon.png</icon>
+    
+    <!-- Dependencies -->
+    <dependencies>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="System.Net.Http" version="4.3.4" />
+        <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="6.0.0" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="6.0.0" />
+        <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="6.0.0" />
+        <dependency id="Microsoft.Extensions.Http" version="6.0.0" />
+        <dependency id="Newtonsoft.Json" version="13.0.3" />
+      </group>
+      <group targetFramework=".NET6.0">
+        <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="6.0.0" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="6.0.0" />
+        <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="6.0.0" />
+        <dependency id="Microsoft.Extensions.Http" version="6.0.0" />
+        <dependency id="System.Text.Json" version="6.0.0" />
+      </group>
+    </dependencies>
+  </metadata>
+  
+  <!-- Files to include in the package -->
+  <files>
+    <!-- Main library -->
+    <file src="src\FundraiseUp.Client\bin\Release\netstandard2.0\FundraiseUp.Client.dll" target="lib\netstandard2.0" />
+    <file src="src\FundraiseUp.Client\bin\Release\netstandard2.0\FundraiseUp.Client.pdb" target="lib\netstandard2.0" />
+    <file src="src\FundraiseUp.Client\bin\Release\netstandard2.0\FundraiseUp.Client.xml" target="lib\netstandard2.0" />
+    
+    <file src="src\FundraiseUp.Client\bin\Release\net6.0\FundraiseUp.Client.dll" target="lib\net6.0" />
+    <file src="src\FundraiseUp.Client\bin\Release\net6.0\FundraiseUp.Client.pdb" target="lib\net6.0" />
+    <file src="src\FundraiseUp.Client\bin\Release\net6.0\FundraiseUp.Client.xml" target="lib\net6.0" />
+    
+    <!-- Source files for debugging -->
+    <file src="src\**\*.cs" target="src" />
+    
+    <!-- Documentation -->
+    <file src="README.md" target="" />
+    <file src="CHANGELOG.md" target="" />
+    <file src="LICENSE" target="" />
+    
+    <!-- Package icon -->
+    <file src="icon.png" target="" />
+  </files>
+</package>

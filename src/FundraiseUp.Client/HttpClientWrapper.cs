@@ -5,9 +5,10 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using FundraiseUp.Client.Configuration;
 using FundraiseUp.Client.Models;
+using FundraiseUp.Client.Utilities;
+using Microsoft.Extensions.Logging;
 
 namespace FundraiseUp.Client
 {
@@ -19,6 +20,7 @@ namespace FundraiseUp.Client
         private readonly HttpClient _httpClient;
         private readonly FundraiseUpClientOptions _options;
         private readonly ILogger? _logger;
+        private readonly bool _ownsHttpClient;
         private bool _disposed;
 
         /// <summary>
@@ -30,8 +32,15 @@ namespace FundraiseUp.Client
         {
             _options = options;
             _logger = logger;
+            _ownsHttpClient = true; // We created this HttpClient, so we own it
 
-            _httpClient = new HttpClient
+            // Create HTTP client with rate limiting handler
+            var rateLimitHandler = new RateLimitHandler(options, logger as ILogger<RateLimitHandler>)
+            {
+                InnerHandler = new HttpClientHandler()
+            };
+
+            _httpClient = new HttpClient(rateLimitHandler)
             {
                 BaseAddress = new Uri(options.BaseUrl),
                 Timeout = options.Timeout
@@ -45,31 +54,21 @@ namespace FundraiseUp.Client
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientWrapper"/> class with a custom HttpClient.
+        /// This constructor is typically used with HttpClientFactory where the HttpClient lifecycle is managed externally.
         /// </summary>
         /// <param name="options">The client options.</param>
-        /// <param name="httpClient">Custom HTTP client instance.</param>
+        /// <param name="httpClient">Custom HTTP client instance (typically from HttpClientFactory).</param>
         /// <param name="logger">Optional logger instance.</param>
         public HttpClientWrapper(FundraiseUpClientOptions options, HttpClient httpClient, ILogger? logger = null)
         {
             _options = options;
             _logger = logger;
             _httpClient = httpClient;
+            _ownsHttpClient = false; // External HttpClient (e.g., from HttpClientFactory), don't dispose
 
-            // Configure the provided HttpClient
-            _httpClient.BaseAddress = new Uri(options.BaseUrl);
-            _httpClient.Timeout = options.Timeout;
-
-            // Set default headers
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {options.ApiKey}");
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", options.UserAgent);
-            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-
-            // Add any additional headers
-            foreach (var header in options.AdditionalHeaders)
-            {
-                _httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
-            }
+            // Note: When using HttpClientFactory, the HttpClient is typically pre-configured
+            // in the service registration, so we don't reconfigure it here to avoid conflicts.
+            // If needed, additional headers can still be added per request.
         }
 
         /// <summary>
@@ -212,7 +211,12 @@ namespace FundraiseUp.Client
         {
             if (!_disposed && disposing)
             {
-                _httpClient?.Dispose();
+                // Only dispose the HttpClient if we own it (created it ourselves)
+                // HttpClientFactory-managed clients should not be disposed manually
+                if (_ownsHttpClient)
+                {
+                    _httpClient?.Dispose();
+                }
                 _disposed = true;
             }
         }

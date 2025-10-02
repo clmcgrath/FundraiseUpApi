@@ -1,30 +1,51 @@
-# Simple GitHub Flow with semantic versioning
 mode: ContinuousDelivery
+major-version-bump-message: '\+semver:\s?(breaking|major)'
+minor-version-bump-message: '\+semver:\s?(feature|minor)'
+patch-version-bump-message: '\+semver:\s?(fix|patch)'
+no-bump-message: '\+semver:\s?(none|skip)'
+commit-message-incrementing: Enabled
 
 branches:
-  # Production releases - stable versions only
   master:
+    tag: ''
     increment: Patch
-    is-mainline: true
-  
-  # Development branch - pre-release versions  
+    regex: ^master$
+    is-release-branch: true
+    
+  stable:
+    tag: rc
+    increment: Patch
+    regex: ^stable$
+    is-release-branch: true
+    source-branches: ['master']
+    
   dev:
-    tag: 'alpha'
+    tag: beta
     increment: Minor
-  
-  # Beta branch - release candidates for testing
-  beta:
-    regex: ^beta$|^release[/-]
-    tag: 'beta'
-    increment: Patch
+    regex: ^dev$|^develop$
+    source-branches: ['master']
     
-  # Feature branches - inherit version from parent
   feature:
-    regex: ^features?[/-]
-    tag: useBranchName
-    increment: Inherit
+    tag: alpha
+    increment: Minor
+    regex: ^feature[/-].+
+    source-branches: ['dev', 'master']
     
-  # Hotfix branches - patch releases
   hotfix:
-    regex: ^hotfix[/-]
+    tag: hotfix
     increment: Patch
+    regex: ^hotfix[/-].+
+    source-branches: ['master']
+    
+  support:
+    tag: support
+    increment: None
+    regex: ^support[/-].+
+    source-branches: ['master']
+    
+  release:
+    tag: rc
+    increment: None
+    regex: ^release[/-].+
+    source-branches: ['dev']
+    is-release-branch: true

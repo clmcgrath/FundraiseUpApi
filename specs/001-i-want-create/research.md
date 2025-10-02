@@ -1,3 +1,4 @@
+
 # Research: FundraiseUp API .NET Client Library
 
 ## Technology Decisions
@@ -30,7 +31,7 @@
 ### Rate Limiting Implementation
 **Decision**: Token bucket algorithm with configurable strategies  
 **Rationale**:
-- Handles FundraiseUp\'s 3 concurrent request limit effectively
+- Handles FundraiseUp 3 concurrent request limit effectively
 - Supports different strategies (retry, exception, queue) as specified
 - Can be extended for future rate limit changes
 - Industry standard approach

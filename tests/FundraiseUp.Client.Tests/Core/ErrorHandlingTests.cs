@@ -13,7 +13,7 @@ using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace FundraiseUp.Client.Tests.UnitTests
+namespace FundraiseUp.Client.Tests.Core
 {
     public class ErrorHandlingTests
     {
@@ -24,7 +24,10 @@ namespace FundraiseUp.Client.Tests.UnitTests
         public ErrorHandlingTests()
         {
             _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-            _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+            _httpClient = new HttpClient(_httpMessageHandlerMock.Object)
+            {
+                BaseAddress = new Uri("https://api.test.com")
+            };
             var logger = new Mock<ILogger<FundraiseUpClient>>();
 
             _client = new FundraiseUpClient("test-api-key", new FundraiseUpClientOptions
@@ -82,8 +85,8 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Act & Assert
             var exception = await Assert.ThrowsAsync<FundraiseUpApiException>(async () =>
             {
-                await _client.Campaigns
-                    .GetById("some-campaign")
+                await _client.Donations
+                    .GetById("some-donation")
                     .ExecuteAsync();
             });
 
@@ -110,10 +113,20 @@ namespace FundraiseUp.Client.Tests.UnitTests
 
             var invalidRequest = new CreateDonationRequest
             {
-                Amount = -100.00m, // Invalid negative amount
+                Amount = "-100.00", // Invalid negative amount
                 Currency = "USD",
-                DonorEmail = "test@example.com",
-                CampaignId = "campaign-123"
+                Supporter = new SupporterRequest
+                {
+                    FirstName = "Test",
+                    LastName = "User",
+                    Email = "test@example.com"
+                },
+                Campaign = "campaign-123",
+                Designation = "EXXXXXXX",
+                PaymentMethod = new PaymentMethodRequest
+                {
+                    Stripe = new StripePaymentMethodRequest { Id = "pm_card_visa" }
+                }
             };
 
             // Act & Assert
@@ -148,7 +161,7 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Act & Assert
             var exception = await Assert.ThrowsAsync<FundraiseUpApiException>(async () =>
             {
-                await _client.Donors
+                await _client.Supporters
                     .GetById("some-donor")
                     .ExecuteAsync();
             });
@@ -189,10 +202,20 @@ namespace FundraiseUp.Client.Tests.UnitTests
 
             var invalidRequest = new CreateDonationRequest
             {
-                Amount = 0.00m,
+                Amount = "0.00",
                 Currency = "USD",
-                DonorEmail = "invalid-email",
-                CampaignId = "campaign-123"
+                Supporter = new SupporterRequest
+                {
+                    FirstName = "Test",
+                    LastName = "User",
+                    Email = "invalid-email"
+                },
+                Campaign = "campaign-123",
+                Designation = "EXXXXXXX",
+                PaymentMethod = new PaymentMethodRequest
+                {
+                    Stripe = new StripePaymentMethodRequest { Id = "pm_card_visa" }
+                }
             };
 
             // Act & Assert
@@ -248,38 +271,10 @@ namespace FundraiseUp.Client.Tests.UnitTests
             // Act & Assert
             await Assert.ThrowsAsync<HttpRequestException>(async () =>
             {
-                await _client.Campaigns
-                    .GetById("some-campaign")
+                await _client.Donations
+                    .GetById("some-donation")
                     .ExecuteAsync();
             });
-        }
-
-        [Theory]
-        [InlineData("")]
-        [InlineData(null)]
-        [InlineData("   ")]
-        public void CreateDonationRequest_WithInvalidEmail_ShouldFailValidation(string invalidEmail)
-        {
-            // Arrange
-            var request = new CreateDonationRequest
-            {
-                Amount = 100.00m,
-                Currency = "USD",
-                DonorEmail = invalidEmail,
-                CampaignId = "campaign-123"
-            };
-
-            // Act & Assert
-            var validationResults = ValidateObject(request);
-            validationResults.Should().NotBeEmpty();
-        }
-
-        private static List<System.ComponentModel.DataAnnotations.ValidationResult> ValidateObject(object obj)
-        {
-            var validationResults = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
-            var context = new System.ComponentModel.DataAnnotations.ValidationContext(obj);
-            System.ComponentModel.DataAnnotations.Validator.TryValidateObject(obj, context, validationResults, true);
-            return validationResults;
         }
 
         [Theory]
@@ -312,10 +307,20 @@ namespace FundraiseUp.Client.Tests.UnitTests
 
             var invalidRequest = new CreateDonationRequest
             {
-                Amount = invalidAmount,
+                Amount = invalidAmount.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 Currency = "USD",
-                DonorEmail = "test@example.com",
-                CampaignId = "campaign-123"
+                Supporter = new SupporterRequest
+                {
+                    FirstName = "Test",
+                    LastName = "User",
+                    Email = "test@example.com"
+                },
+                Campaign = "campaign-123",
+                Designation = "EXXXXXXX",
+                PaymentMethod = new PaymentMethodRequest
+                {
+                    Stripe = new StripePaymentMethodRequest { Id = "pm_card_visa" }
+                }
             };
 
             // Act & Assert

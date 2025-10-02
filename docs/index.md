@@ -1,10 +1,28 @@
+---
+layout: default
+title: Home
+nav_ord| [Performance Guide](performance.md) | Optimization tips and best practices |
+
+## 🚀 Quick Start {#quick-start}
+
+### Installation
+description: "A modern, fluent .NET client library for consuming the FundraiseUp API"
+permalink: /
+---
+
 # FundraiseUp .NET Client Library
 
 [![NuGet](https://img.shields.io/nuget/v/FundraiseUp.Client.svg)](https://www.nuget.org/packages/FundraiseUp.Client)
-[![Build Status](https://github.com/YourOrg/FundraiseUpApi/workflows/CI/badge.svg)](https://github.com/YourOrg/FundraiseUpApi/actions)
-[![License](https://img.shields.io/github/license/YourOrg/FundraiseUpApi.svg)](LICENSE)
+[![Build Status](https://github.com/clmcgrath/FundraiseUpApi/workflows/CI/badge.svg)](https://github.com/clmcgrath/FundraiseUpApi/actions)
+[![License](https://img.shields.io/github/license/clmcgrath/FundraiseUpApi.svg)](https://github.com/clmcgrath/FundraiseUpApi/blob/main/LICENSE)
 
 A modern, fluent .NET client library for consuming the FundraiseUp API with comprehensive support for all endpoints, dependency injection, and enterprise-grade reliability.
+
+{: .fs-6 .fw-300 }
+
+[Get started now](#quick-start){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 } [View it on GitHub](https://github.com/clmcgrath/FundraiseUpApi){: .btn .fs-5 .mb-4 .mb-md-0 }
+
+---
 
 ## ✨ Features
 
@@ -16,7 +34,19 @@ A modern, fluent .NET client library for consuming the FundraiseUp API with comp
 - **Comprehensive Logging** - Structured logging with Microsoft.Extensions.Logging
 - **Secure by Default** - HTTPS enforcement and secure credential management
 
-## 🚀 Quick Start
+## � Documentation
+
+| Section | Description |
+|:--------|:------------|
+| [Getting Started](getting-started.md) | Installation and basic setup |
+| [Configuration](configuration.md) | Comprehensive configuration options |
+| [Rate Limiting & Connection Pooling](RATE_LIMITING_CONNECTION_POOLING.md) | Advanced performance optimization |
+| [Examples](EXAMPLES.md) | Common usage patterns and scenarios |
+| [API Reference](api-reference.md) | Complete method documentation |
+| [Error Handling](error-handling.md) | Exception types and handling strategies |
+| [Performance Guide](performance.md) | Optimization tips and best practices |
+
+## �🚀 Quick Start
 
 ### Installation
 
@@ -78,12 +108,29 @@ public class DonationService
 
 ## 📚 Documentation
 
+### Core Guides
 - [**Getting Started**](getting-started.md) - Installation and basic setup
 - [**Configuration Guide**](configuration.md) - Comprehensive configuration options
+- [**HttpClientFactory Integration**](httpclientfactory.md) - Enterprise HTTP client management
 - [**API Reference**](api-reference.md) - Complete API documentation
-- [**Examples**](examples.md) - Common usage patterns and scenarios
+- [**Examples**](EXAMPLES.md) - Common usage patterns and scenarios
+
+### Advanced Topics
 - [**Error Handling**](error-handling.md) - Exception types and handling strategies
 - [**Performance Guide**](performance.md) - Optimization tips and best practices
+- [**Best Practices**](best-practices.md) - Production-ready patterns and recommendations
+- [**Rate Limiting & Connection Pooling**](RATE_LIMITING_CONNECTION_POOLING.md) - Advanced performance optimization
+
+### Development
+- [**Branching Strategy**](branching-strategy.md) - Git workflow and versioning approach
+- [**Testing Guide**](../TESTING.md) - Unit testing patterns and strategies
+
+### Support & Reference
+- [**FAQ**](faq.md) - Frequently asked questions and answers
+- [**Troubleshooting**](troubleshooting.md) - Common issues and solutions
+- [**Migration Guide**](migration-guide.md) - Version upgrade guides
+- [**Roadmap**](roadmap.md) - Future development plans and priorities
+- [**Changelog**](changelog.md) - Complete version history
 
 ## 🏗️ Architecture
 
@@ -108,6 +155,6 @@ This project is licensed under the MIT License - see the [LICENSE](../LICENSE) f
 
 ## 🆘 Support
 
-- [Issues](https://github.com/YourOrg/FundraiseUpApi/issues) - Bug reports and feature requests
-- [Discussions](https://github.com/YourOrg/FundraiseUpApi/discussions) - Community support and questions
-- [Documentation](https://yourorgg.github.io/FundraiseUpApi/) - Comprehensive guides and API reference
+- [Issues](https://github.com/clmcgrath/FundraiseUpApi/issues) - Bug reports and feature requests
+- [Discussions](https://github.com/clmcgrath/FundraiseUpApi/discussions) - Community support and questions
+- [Documentation](https://clmcgrath.github.io/FundraiseUpApi/) - Comprehensive guides and API reference

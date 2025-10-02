@@ -134,4 +134,40 @@ namespace FundraiseUp.Client.Exceptions
             ValidationErrors = validationErrors ?? new Dictionary<string, string>();
         }
     }
+
+    /// <summary>
+    /// Exception thrown when the FundraiseUp API rate limit is exceeded.
+    /// </summary>
+    public class RateLimitExceededException : FundraiseUpApiException
+    {
+        /// <summary>
+        /// Gets the number of seconds to wait before retrying (from Retry-After header).
+        /// </summary>
+        public int? RetryAfterSeconds { get; }
+
+        /// <summary>
+        /// Gets the current number of concurrent requests when the limit was hit.
+        /// </summary>
+        public int CurrentConcurrentRequests { get; }
+
+        /// <summary>
+        /// Gets the maximum allowed concurrent requests.
+        /// </summary>
+        public int MaxConcurrentRequests { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RateLimitExceededException"/> class.
+        /// </summary>
+        /// <param name="currentRequests">The current number of concurrent requests.</param>
+        /// <param name="maxRequests">The maximum allowed concurrent requests.</param>
+        /// <param name="retryAfterSeconds">Seconds to wait before retrying.</param>
+        public RateLimitExceededException(int currentRequests, int maxRequests, int? retryAfterSeconds = null)
+            : base(429, $"Rate limit exceeded: {currentRequests}/{maxRequests} concurrent requests. " +
+                       (retryAfterSeconds.HasValue ? $"Retry after {retryAfterSeconds} seconds." : ""))
+        {
+            CurrentConcurrentRequests = currentRequests;
+            MaxConcurrentRequests = maxRequests;
+            RetryAfterSeconds = retryAfterSeconds;
+        }
+    }
 }

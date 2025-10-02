@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6.0;net8.0</TargetFrameworks>
     <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -18,8 +18,8 @@
     <Product>FundraiseUp API .NET Client Library</Product>
     <Description>A modern, fluent .NET client library for consuming the FundraiseUp API with comprehensive support for all endpoints, dependency injection, and enterprise-grade reliability.</Description>
     <PackageTags>fundraiseup;api;client;donation;campaign;fundraising;httpclient;async;dependency-injection</PackageTags>
-    <PackageProjectUrl>https://github.com/YourOrg/FundraiseUpApi</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/YourOrg/FundraiseUpApi</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/clmcgrath/FundraiseUpApi</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/clmcgrath/FundraiseUpApi</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
