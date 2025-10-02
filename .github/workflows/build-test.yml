@@ -7,6 +7,14 @@ on:
     branches: [ main, dev ]
   workflow_dispatch:
 
+# Required permissions for test reporting and PR comments
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+  statuses: write
+
 env:
   DOTNET_NOLOGO: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -136,13 +144,12 @@ jobs:
         fi
 
     - name: Publish test results
-      uses: dorny/test-reporter@v1
+      uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
       with:
-        name: 'Test Results (${{ matrix.display-name }})'
-        path: './test-results/*.trx'
-        reporter: 'dotnet-trx'
-        fail-on-error: true
+        files: './test-results/*.trx'
+        check_name: 'Test Results (${{ matrix.display-name }})'
+        comment_title: 'Test Results for ${{ matrix.display-name }}'
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
