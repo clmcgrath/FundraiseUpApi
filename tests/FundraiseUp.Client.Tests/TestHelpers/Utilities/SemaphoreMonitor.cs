@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace FundraiseUp.Client.Tests.Utilities
+namespace FundraiseUp.Client.Tests.TestHelpers.Utilities
 {
     /// <summary>
     /// Utility for monitoring SemaphoreSlim usage in tests

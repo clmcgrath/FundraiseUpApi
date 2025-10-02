@@ -166,10 +166,14 @@ namespace FundraiseUp.Client.Configuration
                 throw new FundraiseUpConfigurationException("Base URL is required and cannot be empty");
             }
 
-            if (!Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) ||
-                (uri.Scheme != "http" && uri.Scheme != "https"))
+            if (!Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri))
             {
-                throw new FundraiseUpConfigurationException("Base URL must be a valid HTTP or HTTPS URL");
+                throw new FundraiseUpConfigurationException("Base URL must be a valid URL");
+            }
+
+            if (uri.Scheme != "https")
+            {
+                throw new FundraiseUpConfigurationException("Base URL must use HTTPS for security");
             }
 
             if (options.Timeout <= TimeSpan.Zero)
@@ -200,6 +204,16 @@ namespace FundraiseUp.Client.Configuration
             if (options.QueueTimeout <= TimeSpan.Zero)
             {
                 throw new FundraiseUpConfigurationException("Queue timeout must be greater than zero");
+            }
+
+            // Logical validation: Timeout should be reasonable for retry scenarios
+            if (options.MaxRetryAttempts > 0)
+            {
+                var totalRetryTime = TimeSpan.FromTicks(options.RetryDelay.Ticks * options.MaxRetryAttempts);
+                if (options.Timeout <= totalRetryTime)
+                {
+                    throw new FundraiseUpConfigurationException("Timeout must be longer than total retry time (RetryDelay * MaxRetryAttempts)");
+                }
             }
         }
     }

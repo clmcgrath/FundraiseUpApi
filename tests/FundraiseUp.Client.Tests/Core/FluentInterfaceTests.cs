@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using FundraiseUp.Client.Configuration;
 using FundraiseUp.Client.Requests;
-using FundraiseUp.Client.Tests.TestHelpers;
+using FundraiseUp.Client.Tests.TestHelpers.Mocking;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -29,7 +29,7 @@ namespace FundraiseUp.Client.Tests.Core
 
             var mockResponse = MockResponseBuilder.CreateValidationErrorResponse(validationErrors);
 
-            var httpMockSetup = new HttpClientMockSetup();
+            var httpMockSetup = new HttpMockBuilder();
             httpMockSetup.SetupRequest(HttpMethod.Post, "/donations", mockResponse);
 
             var httpClient = httpMockSetup.CreateHttpClient();
