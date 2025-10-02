@@ -31,7 +31,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FundraiseUp.Client\FundraiseUp.Client.csproj" />
-    <ProjectReference Include="..\FundraiseUp.Client.TestHelpers\FundraiseUp.Client.TestHelpers.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -7,7 +7,7 @@ using System.Text.Json;
 using FundraiseUp.Client.Configuration;
 using FundraiseUp.Client.Models;
 
-namespace FundraiseUp.Client.Tests.TestHelpers
+namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
 {
     /// <summary>
     /// Builder for creating mock HTTP responses for testing

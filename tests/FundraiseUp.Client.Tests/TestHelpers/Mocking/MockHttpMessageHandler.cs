@@ -5,10 +5,10 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FundraiseUp.Client.Tests.Utilities
+namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
 {
     /// <summary>
-    /// Mock HTTP message handler for testing rate limiting scenarios
+    /// Simplified mock HTTP message handler for testing rate limiting scenarios
     /// </summary>
     public class MockHttpMessageHandler : HttpMessageHandler
     {

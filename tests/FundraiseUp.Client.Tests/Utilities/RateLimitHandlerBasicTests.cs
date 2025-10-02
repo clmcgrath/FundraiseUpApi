@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FundraiseUp.Client.Configuration;
-using FundraiseUp.Client.Tests.Utilities;
+using FundraiseUp.Client.Tests.TestHelpers.Mocking;
 using FundraiseUp.Client.Utilities;
 using Xunit;
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 
-namespace FundraiseUp.Client.Tests.Utilities
+namespace FundraiseUp.Client.Tests.TestHelpers.Utilities
 {
     /// <summary>
     /// Test logger that captures log messages for verification in tests
