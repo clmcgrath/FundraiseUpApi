@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔄 Recent Changes (October 2025)
 
+
 #### Multi-Framework Support & Performance Optimization
 - **Added .NET 8 Target Framework**: Library now targets `netstandard2.0`, `net6.0`, and `net8.0` for maximum compatibility and performance
 - **Automatic Framework Selection**: NuGet automatically provides the best framework version (15-25% performance boost for .NET 8 users)
