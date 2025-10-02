@@ -155,7 +155,7 @@ namespace FundraiseUp.Client.Utilities
                         var response = await base.SendAsync(request, cancellationToken);
 
                         // Check if we got a 429 Too Many Requests response  
-                        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                        if ((int)response.StatusCode == 429)
                         {
                             var retryAfter = GetRetryAfterSeconds(response);
                             if (retryCount < maxRetries)
@@ -202,7 +202,8 @@ namespace FundraiseUp.Client.Utilities
                 }
             }
 
-            // All code paths should return or throw above; unreachable fallback removed.
+            // If all retries are exhausted, throw an exception indicating the failure.
+            throw new InvalidOperationException("All retry attempts have been exhausted without a successful response.");
         }
 
         /// <summary>
