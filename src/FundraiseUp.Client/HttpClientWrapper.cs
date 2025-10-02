@@ -81,7 +81,7 @@ namespace FundraiseUp.Client
         public async Task<T> GetAsync<T>(string endpoint, string? correlationId = null)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
-            return await SendRequestAsync<T>(request, correlationId);
+            return await SendRequestAsync<T>(request, correlationId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace FundraiseUp.Client
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             using var request = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = content };
             
-            return await SendRequestAsync<T>(request, correlationId);
+            return await SendRequestAsync<T>(request, correlationId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace FundraiseUp.Client
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             using var request = new HttpRequestMessage(HttpMethod.Put, endpoint) { Content = content };
             
-            return await SendRequestAsync<T>(request, correlationId);
+            return await SendRequestAsync<T>(request, correlationId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -132,8 +132,8 @@ namespace FundraiseUp.Client
                 request.Headers.Add("X-Correlation-ID", correlationId);
             }
 
-            using var response = await _httpClient.SendAsync(request);
-            var responseContent = await response.Content.ReadAsStringAsync();
+            using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
