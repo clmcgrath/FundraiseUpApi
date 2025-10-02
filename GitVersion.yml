@@ -5,46 +5,50 @@ patch-version-bump-message: '\+semver:\s?(fix|patch)|^(fix|bug):'
 no-bump-message: '\+semver:\s?(none|skip)|^(docs|ci|test|chore|refactor):'
 commit-message-incrementing: Enabled
 
+ignore:
+  paths:
+    - (?i)^(?!src/).*
+
 branches:
   master:
-    tag: ''
+    label: ''
     increment: Patch
     regex: ^master$
     is-release-branch: true
     
   stable:
-    tag: rc
+    label: rc
     increment: Patch
     regex: ^stable$
     is-release-branch: true
     source-branches: ['master']
     
   dev:
-    tag: beta
+    label: beta
     increment: Minor
     regex: ^dev$|^develop$
     source-branches: ['master']
     
   feature:
-    tag: alpha
+    label: alpha
     increment: Minor
     regex: ^feature[/-].+
     source-branches: ['dev', 'master']
     
   hotfix:
-    tag: hotfix
+    label: hotfix
     increment: Patch
     regex: ^hotfix[/-].+
     source-branches: ['master']
     
   support:
-    tag: support
+    label: support
     increment: None
     regex: ^support[/-].+
     source-branches: ['master']
     
   release:
-    tag: rc
+    label: rc
     increment: None
     regex: ^release[/-].+
     source-branches: ['dev']
