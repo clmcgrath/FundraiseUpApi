@@ -29,25 +29,25 @@ branches:
     source-branches: ['master']
     
   feature:
-    tag: alpha
+    label: alpha
     increment: Minor
     regex: ^feature[/-]
     source-branches: ['dev', 'master']
     
   hotfix:
-    tag: hotfix
+    label: hotfix
     increment: Patch
     regex: ^hotfix[/-]
     source-branches: ['master']
     
   support:
-    tag: support
+    label: support
     increment: None
     regex: ^support[/-]
     source-branches: ['master']
     
   release:
-    tag: rc
+    label: rc
     increment: None
     regex: ^release[/-]
     source-branches: ['dev']
