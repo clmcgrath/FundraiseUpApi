@@ -22,7 +22,7 @@ branches:
     is-release-branch: true
     source-branches: ['master']
     
-  develop:
+  dev:
     label: beta
     increment: Minor
     regex: ^dev$|^develop$
@@ -32,7 +32,7 @@ branches:
     label: alpha
     increment: Minor
     regex: ^feature[/-]
-    source-branches: ['develop', 'master']
+    source-branches: ['dev', 'master']
     
   hotfix:
     label: hotfix
@@ -50,5 +50,5 @@ branches:
     label: rc
     increment: None
     regex: ^release[/-]
-    source-branches: ['develop']
+    source-branches: ['dev']
     is-release-branch: true
