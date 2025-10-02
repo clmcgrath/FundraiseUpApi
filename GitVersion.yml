@@ -1,4 +1,5 @@
 mode: ContinuousDelivery
+
 major-version-bump-message: '\+semver:\s?(breaking|major)|(BREAKING CHANGE)'
 minor-version-bump-message: '\+semver:\s?(feature|minor)|^(feat|add|new):'
 patch-version-bump-message: '\+semver:\s?(fix|patch)|^(fix|bug):'
@@ -19,6 +20,7 @@ branches:
   stable:
     label: rc
     increment: Patch
+
     regex: ^stable$
     is-release-branch: true
     source-branches: ['master']
@@ -42,6 +44,7 @@ branches:
     source-branches: ['master']
     
   support:
+
     label: support
     increment: None
     regex: ^support[/-].+
@@ -53,4 +56,3 @@ branches:
     regex: ^release[/-].+
     source-branches: ['dev']
     is-release-branch: true
- 

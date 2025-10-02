@@ -48,12 +48,14 @@ jobs:
           ${{ runner.os }}-nuget-
 
     - name: Install GitVersion
+
       uses: gittools/actions/gitversion/setup@v4.1.0
       with:
         versionSpec: '6.4.0'
 
     - name: Calculate Version
       uses: gittools/actions/gitversion/execute@v4.1.0
+
       id: gitversion
 
     - name: Restore dependencies
@@ -74,6 +76,7 @@ jobs:
           --no-build \
           --output ./packages \
           -p:PackageVersion=${{ steps.gitversion.outputs.semVer }}
+
 
     - name: Validate multi-target framework builds
       run: |
