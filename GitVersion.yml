@@ -1,5 +1,5 @@
 mode: ContinuousDelivery
-tag-prefix: 'v'
+tag-prefix: ''
 update-build-number: false
 tag-pre-release-weight: 60000
 major-version-bump-message: '\+semver:\s?(breaking|major)'
@@ -29,25 +29,25 @@ branches:
     source-branches: ['master']
     
   feature:
-    label: alpha
+    tag: alpha
     increment: Minor
     regex: ^feature[/-]
     source-branches: ['dev', 'master']
     
   hotfix:
-    label: hotfix
+    tag: hotfix
     increment: Patch
     regex: ^hotfix[/-]
     source-branches: ['master']
     
   support:
-    label: support
+    tag: support
     increment: None
     regex: ^support[/-]
     source-branches: ['master']
     
   release:
-    label: rc
+    tag: rc
     increment: None
     regex: ^release[/-]
     source-branches: ['dev']
