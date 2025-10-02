@@ -83,7 +83,7 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Utilities
             }
         }
 
-        public IDisposable BeginScope<TState>(TState state)
+        IDisposable ILogger.BeginScope<TState>(TState state)
         {
             return new NoOpDisposable(); // No scope support needed for testing
         }

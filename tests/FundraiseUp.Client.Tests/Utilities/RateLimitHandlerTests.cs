@@ -112,7 +112,7 @@ namespace FundraiseUp.Client.Tests.Utilities
             public void Dispose() { }
         }
 
-        public IDisposable BeginScope<TState>(TState state) => NullScope.Instance;
+        IDisposable ILogger.BeginScope<TState>(TState state) => NullScope.Instance;
         public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
         public void Log<TState>(
             Microsoft.Extensions.Logging.LogLevel logLevel,
