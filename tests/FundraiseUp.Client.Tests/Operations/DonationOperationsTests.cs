@@ -14,7 +14,7 @@ using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace FundraiseUp.Client.Tests.UnitTests
+namespace FundraiseUp.Client.Tests.Operations
 {
     public class DonationOperationsTests
     {

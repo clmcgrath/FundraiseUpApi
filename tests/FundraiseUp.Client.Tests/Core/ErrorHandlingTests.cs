@@ -13,7 +13,7 @@ using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace FundraiseUp.Client.Tests.UnitTests
+namespace FundraiseUp.Client.Tests.Core
 {
     public class ErrorHandlingTests
     {
@@ -275,44 +275,6 @@ namespace FundraiseUp.Client.Tests.UnitTests
                     .GetById("some-donation")
                     .ExecuteAsync();
             });
-        }
-
-        [Theory(Skip = "Validation testing requires more complex setup - will be handled in integration tests")]
-        [InlineData("")]
-        [InlineData(null)]
-        [InlineData("   ")]
-        public void CreateDonationRequest_WithInvalidEmail_ShouldFailValidation(string invalidEmail)
-        {
-            // Arrange
-            var request = new CreateDonationRequest
-            {
-                Amount = "100.00",
-                Currency = "USD",
-                Supporter = new SupporterRequest
-                {
-                    FirstName = "Test",
-                    LastName = "User",
-                    Email = invalidEmail
-                },
-                Campaign = "campaign-123",
-                Designation = "EXXXXXXX",
-                PaymentMethod = new PaymentMethodRequest
-                {
-                    Stripe = new StripePaymentMethodRequest { Id = "pm_card_visa" }
-                }
-            };
-
-            // Act & Assert
-            var validationResults = ValidateObject(request);
-            validationResults.Should().NotBeEmpty();
-        }
-
-        private static List<System.ComponentModel.DataAnnotations.ValidationResult> ValidateObject(object obj)
-        {
-            var validationResults = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
-            var context = new System.ComponentModel.DataAnnotations.ValidationContext(obj);
-            System.ComponentModel.DataAnnotations.Validator.TryValidateObject(obj, context, validationResults, true);
-            return validationResults;
         }
 
         [Theory]

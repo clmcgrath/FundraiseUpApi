@@ -14,7 +14,7 @@ using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace FundraiseUp.Client.Tests.UnitTests
+namespace FundraiseUp.Client.Tests.Operations
 {
     public class SupporterOperationsTests
     {
@@ -84,58 +84,18 @@ namespace FundraiseUp.Client.Tests.UnitTests
 
 
         [Fact]
-        public async Task SearchSupporters_WithEmailFilter_ShouldReturnMatchingSupporters()
+        public async Task SearchSupporters_WithExpressionFilter_ShouldThrowNotSupportedException()
         {
-            // Arrange
-            var expectedResult = new PagedResult<SupporterResponse>
-            {
-                Items = new List<SupporterResponse>
-                {
-                    new SupporterResponse
-                    {
-                        Id = "supporter-search-1",
-                        Email = "test@example.com",
-                        FirstName = "Test",
-                        LastName = "User"
-                    },
-                    new SupporterResponse
-                    {
-                        Id = "supporter-search-2",
-                        Email = "another@example.com",
-                        FirstName = "Another",
-                        LastName = "User"
-                    }
-                },
-                TotalCount = 2,
-                CurrentPage = 1,
-                PageSize = 20
-            };
+            // Arrange - Expression-based filtering is not supported by FundraiseUp API
 
-            var jsonResponse = JsonSerializer.Serialize(expectedResult, JsonConfiguration.DefaultOptions);
-            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
-            };
-
-            _httpMessageHandlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
-            // Act
-            var result = await _client.Supporters
+            // Act & Assert
+            var action = async () => await _client.Supporters
                 .Search()
                 .Where(d => d.Email != null && d.Email.Contains("example.com"))
                 .ExecuteAsync();
 
-            // Assert
-            result.Should().NotBeNull();
-            result.Data.Should().HaveCount(2);
-            result.HasMore.Should().BeFalse();
-            result.NextCursor.Should().BeNull();
+            await action.Should().ThrowAsync<NotSupportedException>()
+                .WithMessage("Filtering via expressions is not supported by the FundraiseUp API. Please use API-specific filtering methods if available.");
         }
 
         [Fact]
