@@ -44,13 +44,13 @@ namespace FundraiseUp.Client.Utilities
             switch (_options.RateLimitStrategy)
             {
                 case RateLimitStrategy.Exception:
-                    return await SendWithExceptionStrategy(request, cancellationToken);
+                    return await SendWithExceptionStrategy(request, cancellationToken).ConfigureAwait(false);
 
                 case RateLimitStrategy.Queue:
-                    return await SendWithQueueStrategy(request, cancellationToken);
+                    return await SendWithQueueStrategy(request, cancellationToken).ConfigureAwait(false);
 
                 case RateLimitStrategy.Retry:
-                    return await SendWithRetryStrategy(request, cancellationToken);
+                    return await SendWithRetryStrategy(request, cancellationToken).ConfigureAwait(false);
 
                 default:
                     throw new InvalidOperationException($"Unsupported rate limit strategy: {_options.RateLimitStrategy}");
