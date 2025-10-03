@@ -8,7 +8,10 @@ commit-message-incrementing: Enabled
 
 ignore:
   paths:
-    - (?i)^(?!src/).*
+    - docs/**
+    - .github/**
+    - test/**
+    - README.md
 
 branches:
   master:
