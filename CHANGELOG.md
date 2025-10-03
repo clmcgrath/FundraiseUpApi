@@ -47,7 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed GitVersion Configuration**: Resolved CI/CD failures with proper GitVersion 5.x configuration and branch naming
 - **Enhanced GitHub Actions Permissions**: Added required permissions for test reporting and PR status checks
 - **Release Workflow Permissions**: Fixed workflow_call permissions issue by granting statuses:write to build-test.yml calls
-- **Updated GitHub Actions**: Upgraded all actions to latest versions (checkout@v4, setup-dotnet@v4, cache@v4, gitversion@v1.1.1, gh-release@v2, github-script@v7)
+- **Updated GitHub Actions**: Upgraded all actions to latest versions (checkout@v4, setup-dotnet@v4, cache@v4, gitversion@v4.1.0, gh-release@v2, github-script@v7)
+- **GitVersion 6.4.0 Upgrade**: Updated from 5.12.0 to 6.4.0 for improved performance, .NET 8 compatibility, and latest semantic versioning features
 - **Artifact Management**: Build artifacts shared between jobs for faster test execution
 - **Visual Status Indicators**: Emoji-enhanced job names for better CI/CD visibility (🏗️ Build, 🧪 Test)
 
