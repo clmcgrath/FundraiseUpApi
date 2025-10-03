@@ -330,6 +330,23 @@ jobs:
           echo "availability=Available on GitHub Packages and NuGet.org" >> $GITHUB_OUTPUT
         fi
 
+    - name: Prepare Release Assets
+      run: |
+        echo "📦 Preparing release assets..."
+        mkdir -p ./release-assets
+        cp ./packages/*.nupkg ./release-assets/ 2>/dev/null || true
+        
+        # Only copy symbol packages if they exist
+        if ls ./packages/*.snupkg 1> /dev/null 2>&1; then
+          echo "✅ Symbol packages found, including in release"
+          cp ./packages/*.snupkg ./release-assets/
+        else
+          echo "ℹ️  No symbol packages found, skipping"
+        fi
+        
+        echo "📁 Release assets:"
+        ls -la ./release-assets/
+
     - name: Create GitHub Release
       id: create_release
       uses: softprops/action-gh-release@v2
@@ -393,12 +410,12 @@ jobs:
           - **Commit**: ${{ github.sha }}
           - **Branch**: ${{ github.ref_name }}
           - **Workflow**: ${{ github.run_id }}
-        files: |
-          ./packages/*.nupkg
-          ./packages/*.snupkg
+        files: ./release-assets/*
         draft: false
         prerelease: ${{ contains(steps.version.outputs.semVer, '-') }}
         generate_release_notes: false
+        fail_on_unmatched_files: false
+        make_latest: ${{ !contains(steps.version.outputs.semVer, '-') }}
 
     - name: Publish to GitHub Packages
       run: |
