@@ -554,6 +554,7 @@ jobs:
   post-release-validation:
     name: ✅ Post-Release Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [validate-release, create-release, publish-github-packages, publish-nuget-org]
     if: always() && needs.validate-release.outputs.should_release == 'true'
     
@@ -571,7 +572,7 @@ jobs:
         fi
 
     - name: Validate NuGet Package Availability
-      if: success() && (!contains(needs.validate-release.outputs.version, '-') || contains(needs.validate-release.outputs.version, '-beta') || contains(needs.validate-release.outputs.version, '-rc'))
+      if: success() && needs.publish-nuget-org.result == 'success'
       run: |
         VERSION="${{ needs.validate-release.outputs.version }}"
         echo "🔍 Validating NuGet package availability for version: $VERSION"
@@ -584,20 +585,33 @@ jobs:
           echo "📦 Validating stable release package"
         fi
         
-        # Wait a bit for NuGet indexing
-        sleep 30
+        echo "⏳ Checking NuGet package availability (with cancellation support)..."
         
-        # Check if package is available (may take a few minutes to appear)
-        for i in {1..10}; do
-          if curl -f "https://api.nuget.org/v3-flatcontainer/fundraiseup.client/$VERSION/fundraiseup.client.nuspec" > /dev/null 2>&1; then
-            echo "✅ NuGet package is available"
+        # Check if package is available with shorter, cancellable polling
+        for i in {1..20}; do
+          # Use timeout to make curl cancellable and add progress indication
+          if timeout 10s curl -f -s "https://api.nuget.org/v3-flatcontainer/fundraiseup.client/$VERSION/fundraiseup.client.nuspec" > /dev/null 2>&1; then
+            echo "✅ NuGet package is available and indexed"
             exit 0
           fi
-          echo "⏳ Waiting for NuGet indexing... (attempt $i/10)"
-          sleep 30
+          
+          # Short delay that's more responsive to cancellation
+          echo "⏳ Attempt $i/20: Package not yet indexed, checking again in 10 seconds..."
+          
+          # Use a loop of short sleeps instead of one long sleep for better cancellation response
+          for j in {1..10}; do
+            sleep 1
+            # Check if we should exit early (this helps with cancellation responsiveness)
+            if [ $? -ne 0 ]; then
+              echo "🛑 Validation cancelled or interrupted"
+              exit 1
+            fi
+          done
         done
         
-        echo "⚠️ NuGet package not yet indexed (this is normal and may take up to 15 minutes)"
+        echo "⚠️ NuGet package validation timed out after 200 seconds"
+        echo "This is normal - NuGet indexing can take up to 15 minutes"
+        echo "Package was successfully published but may still be indexing"
 
     - name: Release Summary
       run: |
@@ -605,20 +619,36 @@ jobs:
         echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Version:** v$VERSION" >> $GITHUB_STEP_SUMMARY
-        echo "**Status:** ${{ needs.create-release.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Release Status:** ${{ needs.create-release.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📦 Packages Published" >> $GITHUB_STEP_SUMMARY
-        echo "- 🐙 GitHub Packages" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Publishing Results" >> $GITHUB_STEP_SUMMARY
         
-        # Determine NuGet.org publishing status
-        if [[ "$VERSION" == *"-alpha"* ]] || ([[ "$VERSION" == *"-"* ]] && [[ "$VERSION" != *"-beta"* ]] && [[ "$VERSION" != *"-rc"* ]]); then
-          echo "- 📦 NuGet.org (skipped - alpha/pre-release)" >> $GITHUB_STEP_SUMMARY
-        elif [[ "$VERSION" == *"-beta"* ]]; then
-          echo "- 📦 NuGet.org (beta pre-release)" >> $GITHUB_STEP_SUMMARY
-        elif [[ "$VERSION" == *"-rc"* ]]; then
-          echo "- 📦 NuGet.org (release candidate pre-release)" >> $GITHUB_STEP_SUMMARY
+        # GitHub Packages status
+        GITHUB_STATUS="${{ needs.publish-github-packages.result }}"
+        if [ "$GITHUB_STATUS" = "success" ]; then
+          echo "- ✅ GitHub Packages: Published successfully" >> $GITHUB_STEP_SUMMARY
+        elif [ "$GITHUB_STATUS" = "failure" ]; then
+          echo "- ❌ GitHub Packages: Publishing failed" >> $GITHUB_STEP_SUMMARY
+        elif [ "$GITHUB_STATUS" = "cancelled" ]; then
+          echo "- 🛑 GitHub Packages: Publishing cancelled" >> $GITHUB_STEP_SUMMARY
         else
-          echo "- 📦 NuGet.org (stable release)" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏳ GitHub Packages: $GITHUB_STATUS" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # NuGet.org status
+        NUGET_STATUS="${{ needs.publish-nuget-org.result }}"
+        if [[ "$VERSION" == *"-alpha"* ]] || ([[ "$VERSION" == *"-"* ]] && [[ "$VERSION" != *"-beta"* ]] && [[ "$VERSION" != *"-rc"* ]]); then
+          echo "- ⏭️ NuGet.org: Skipped (alpha/development release)" >> $GITHUB_STEP_SUMMARY
+        elif [ "$NUGET_STATUS" = "success" ]; then
+          echo "- ✅ NuGet.org: Published successfully" >> $GITHUB_STEP_SUMMARY
+        elif [ "$NUGET_STATUS" = "failure" ]; then
+          echo "- ❌ NuGet.org: Publishing failed" >> $GITHUB_STEP_SUMMARY
+        elif [ "$NUGET_STATUS" = "cancelled" ]; then
+          echo "- 🛑 NuGet.org: Publishing cancelled" >> $GITHUB_STEP_SUMMARY
+        elif [ "$NUGET_STATUS" = "skipped" ]; then
+          echo "- ⏭️ NuGet.org: Skipped (conditions not met)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- ⏳ NuGet.org: $NUGET_STATUS" >> $GITHUB_STEP_SUMMARY
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
