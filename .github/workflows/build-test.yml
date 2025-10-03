@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [ main, dev ]
   workflow_dispatch:
+  workflow_call:
+    # Allow this workflow to be called by other workflows
 
 # Required permissions for test reporting and PR comments
 permissions:

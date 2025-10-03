@@ -959,7 +959,34 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - Testing requirements and quality gates
 - Pull request process and review guidelines
 
-## 📈 Roadmap
+## � Release Process
+
+This project uses automated releases triggered by merged pull requests to protected branches:
+
+### Automatic Releases
+- **Merge to `master`**: Creates stable release (e.g., `1.2.3`) → GitHub Packages + NuGet.org
+- **Merge to `stable`**: Creates release candidate (e.g., `1.2.3-rc.1`) → GitHub Packages + NuGet.org
+- **Merge to `dev`**: Creates beta release (e.g., `1.3.0-beta.1`) → GitHub Packages + NuGet.org
+- **Other branches**: Alpha releases (e.g., `1.3.0-alpha.1`) → GitHub Packages only
+
+### Manual Releases
+- Available via GitHub Actions → Release workflow → "Run workflow"
+- Includes options for force release and version override
+
+### Version Management
+- Versions calculated automatically using GitVersion
+- Based on conventional commit messages and branch names
+- See [GitVersion.yml](GitVersion.yml) for configuration
+
+### Release Artifacts
+- ✅ GitHub Release with automated release notes
+- ✅ NuGet packages (.nupkg) for all target frameworks
+- ✅ Symbol packages (.snupkg) for debugging
+- ✅ Published to GitHub Packages and NuGet.org
+
+For detailed setup instructions, see [.github/PRODUCTION_ENVIRONMENT.md](.github/PRODUCTION_ENVIRONMENT.md).
+
+## �📈 Roadmap
 
 - [ ] **v1.1** - Advanced filtering and search capabilities
 - [ ] **v1.2** - Enhanced caching and performance optimizations
