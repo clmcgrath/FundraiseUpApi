@@ -148,7 +148,7 @@ namespace FundraiseUp.Client.Operations
             {
                 _logger?.LogInformation("Creating {EntityType} access link for entity: {EntityId}", _entityType, _entityId);
 
-                var result = await _httpClient.PostAsync<TResult>(_endpoint, new { }, _correlationId);
+                var result = await _httpClient.PostAsync<TResult>(_endpoint, new { }, _correlationId).ConfigureAwait(false);
 
                 _logger?.LogInformation("Successfully created {EntityType} access link for entity: {EntityId}", _entityType, _entityId);
 

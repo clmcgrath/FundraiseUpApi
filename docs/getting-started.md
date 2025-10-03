@@ -7,7 +7,7 @@ description: "Get up and running with the FundraiseUp .NET Client Library"
 
 # Getting Started
 
-This guide will help you get up and running with the FundraiseUp .NET Client Library quickly.
+This guide will help you get up and running with the FundraiseUp .NET Client Library quickly. The library is production-ready with enterprise-grade async patterns and comprehensive error handling.
 
 ## Prerequisites
 
@@ -72,7 +72,7 @@ finally
 
 ### 2. Dependency Injection (Recommended)
 
-For production applications, use dependency injection with HttpClientFactory integration:
+For production applications, use dependency injection with HttpClientFactory integration. The library is thread-safe and optimized for production environments:
 
 #### ASP.NET Core / .NET 6+
 ```csharp

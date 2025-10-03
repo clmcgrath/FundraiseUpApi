@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -13,7 +14,8 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
     public class MockHttpMessageHandler : HttpMessageHandler
     {
         private readonly Queue<HttpResponseMessage> _responses = new Queue<HttpResponseMessage>();
-        private readonly List<HttpRequestMessage> _requests = new List<HttpRequestMessage>();
+        private readonly ConcurrentBag<HttpRequestMessage> _requests = new ConcurrentBag<HttpRequestMessage>();
+        private readonly object _responsesLock = new object();
         private int _callCount = 0;
 
         /// <summary>
@@ -24,14 +26,17 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// <summary>
         /// Gets all requests that were made
         /// </summary>
-        public IReadOnlyList<HttpRequestMessage> Requests => _requests.AsReadOnly();
+        public IReadOnlyList<HttpRequestMessage> Requests => _requests.ToArray();
 
         /// <summary>
         /// Queues a response to be returned on the next HTTP call
         /// </summary>
         public void QueueResponse(HttpResponseMessage response)
         {
-            _responses.Enqueue(response);
+            lock (_responsesLock)
+            {
+                _responses.Enqueue(response);
+            }
         }
 
         /// <summary>
@@ -76,25 +81,31 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
             Interlocked.Increment(ref _callCount);
             _requests.Add(request);
 
-            if (_responses.Count == 0)
+            lock (_responsesLock)
             {
-                // Default to success if no responses queued
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                if (_responses.Count == 0)
                 {
-                    Content = new StringContent("{\"default\": true}")
-                });
-            }
+                    // Default to success if no responses queued
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("{\"default\": true}")
+                    });
+                }
 
-            return Task.FromResult(_responses.Dequeue());
+                return Task.FromResult(_responses.Dequeue());
+            }
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                while (_responses.Count > 0)
+                lock (_responsesLock)
                 {
-                    _responses.Dequeue()?.Dispose();
+                    while (_responses.Count > 0)
+                    {
+                        _responses.Dequeue()?.Dispose();
+                    }
                 }
 
                 foreach (var request in _requests)
