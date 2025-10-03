@@ -36,7 +36,7 @@ namespace FundraiseUp.Client.Operations
 
             return new SupporterOperationBuilder<SupporterResponse>(_httpClient, _logger, async (correlationId) =>
             {
-                return await _httpClient.GetAsync<SupporterResponse>($"/v1/supporters/{supporterId}", correlationId);
+                return await _httpClient.GetAsync<SupporterResponse>($"/v1/supporters/{supporterId}", correlationId).ConfigureAwait(false);
             });
         }
 
@@ -106,7 +106,7 @@ namespace FundraiseUp.Client.Operations
         /// <inheritdoc />
         public async Task<TResult> ExecuteAsync()
         {
-            return await _operation(_correlationId);
+            return await _operation(_correlationId).ConfigureAwait(false);
         }
     }
 
@@ -182,7 +182,7 @@ namespace FundraiseUp.Client.Operations
             var queryString = string.Join("&", _queryParameters.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
             var endpoint = string.IsNullOrEmpty(queryString) ? "/v1/supporters" : $"/v1/supporters?{queryString}";
 
-            var response = await _httpClient.GetAsync<SupportersResponse>(endpoint, _correlationId);
+            var response = await _httpClient.GetAsync<SupportersResponse>(endpoint, _correlationId).ConfigureAwait(false);
             return response;
         }
     }

@@ -49,9 +49,12 @@ Thank you for your interest in contributing to the FundraiseUp .NET Client Libra
    dotnet restore
    ```
 
-5. **Run tests to ensure everything works**:
+5. **Run the comprehensive test suite** (172 tests):
    ```bash
    dotnet test
+   
+   # Run with coverage
+   dotnet test --collect:"XPlat Code Coverage"
    ```
 
 #### Development Workflow
@@ -89,14 +92,16 @@ Thank you for your interest in contributing to the FundraiseUp .NET Client Libra
 - Use meaningful variable and method names
 - Add XML documentation for public APIs
 - Keep methods focused and single-purpose
-- Use async/await properly with ConfigureAwait(false)
+- **CRITICAL**: Use async/await properly with ConfigureAwait(false) for all library code
 
 ### Testing Requirements
 
 - **Unit tests required** for all new functionality
-- **Test coverage** should be maintained or improved
+- **Test coverage** should be maintained or improved (currently 172 passing tests)
 - **Use descriptive test names** that explain the scenario
 - **Follow AAA pattern**: Arrange, Act, Assert
+- **Test async operations** properly with realistic scenarios
+- **Include error handling tests** for exception scenarios
 
 ```csharp
 [Test]
@@ -115,6 +120,35 @@ public async Task CreateDonation_WithValidRequest_ShouldReturnDonationResponse()
     Assert.That(result.Amount, Is.EqualTo("100.00"));
 }
 ```
+
+### Async/Await Best Practices (CRITICAL)
+
+This library follows strict async patterns for production safety:
+
+```csharp
+// ✅ CORRECT - All library code MUST use ConfigureAwait(false)
+public async Task<DonationResponse> CreateAsync(CreateDonationRequest request)
+{
+    var response = await _httpClient.PostAsync("/v1/donations", request).ConfigureAwait(false);
+    return await ProcessResponseAsync(response).ConfigureAwait(false);
+}
+
+// ❌ INCORRECT - Will cause deadlocks in SynchronizationContext environments
+public async Task<DonationResponse> CreateAsync(CreateDonationRequest request)
+{
+    var response = await _httpClient.PostAsync("/v1/donations", request);
+    return await ProcessResponseAsync(response);
+}
+
+// ✅ Users control ConfigureAwait at call sites (library doesn't expose this)
+var donation = await client.Donations.Create(request).ExecuteAsync(); // Captures context
+var donation = await client.Donations.Create(request).ExecuteAsync().ConfigureAwait(false); // No context
+```
+
+**Why This Matters:**
+- Library code with SynchronizationContext capture can deadlock in ASP.NET
+- Users need flexibility to choose context behavior at call sites
+- This follows Microsoft's own library patterns (HttpClient, Entity Framework, etc.)
 
 ### Documentation Standards
 

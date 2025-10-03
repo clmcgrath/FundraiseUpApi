@@ -37,13 +37,7 @@ namespace FundraiseUp.Client
             _logger = logger;
             _httpClient = new HttpClientWrapper(options, logger);
 
-            Donations = new DonationOperations(_httpClient, logger);
-            Campaigns = new CampaignOperations(_httpClient, logger);
-            Supporters = new SupporterOperations(_httpClient, logger);
-            RecurringPlans = new RecurringPlanOperations(_httpClient, logger);
-            Events = new EventOperations(_httpClient, logger);
-            Fundraisers = new FundraiserOperations(_httpClient, logger);
-            DonorPortal = new DonorPortalOperations(_httpClient, logger);
+            InitializeOperations();
         }
 
         /// <summary>
@@ -62,35 +56,43 @@ namespace FundraiseUp.Client
             _logger = logger;
             _httpClient = new HttpClientWrapper(options, httpClient, logger);
 
-            Donations = new DonationOperations(_httpClient, logger);
-            Campaigns = new CampaignOperations(_httpClient, logger);
-            Supporters = new SupporterOperations(_httpClient, logger);
-            RecurringPlans = new RecurringPlanOperations(_httpClient, logger);
-            Events = new EventOperations(_httpClient, logger);
-            Fundraisers = new FundraiserOperations(_httpClient, logger);
-            DonorPortal = new DonorPortalOperations(_httpClient, logger);
+            InitializeOperations();
+        }
+
+        /// <summary>
+        /// Initializes all operation instances to avoid duplication across constructors.
+        /// </summary>
+        private void InitializeOperations()
+        {
+            Donations = new DonationOperations(_httpClient, _logger);
+            Campaigns = new CampaignOperations(_httpClient, _logger);
+            Supporters = new SupporterOperations(_httpClient, _logger);
+            RecurringPlans = new RecurringPlanOperations(_httpClient, _logger);
+            Events = new EventOperations(_httpClient, _logger);
+            Fundraisers = new FundraiserOperations(_httpClient, _logger);
+            DonorPortal = new DonorPortalOperations(_httpClient, _logger);
         }
 
         /// <inheritdoc />
-        public IDonationOperations Donations { get; }
+        public IDonationOperations Donations { get; private set; } = null!;
 
         /// <inheritdoc />
-        public ICampaignOperations Campaigns { get; }
+        public ICampaignOperations Campaigns { get; private set; } = null!;
 
         /// <inheritdoc />
-        public ISupporterOperations Supporters { get; }
+        public ISupporterOperations Supporters { get; private set; } = null!;
 
         /// <inheritdoc />
-        public IRecurringPlanOperations RecurringPlans { get; }
+        public IRecurringPlanOperations RecurringPlans { get; private set; } = null!;
 
         /// <inheritdoc />
-        public IEventOperations Events { get; }
+        public IEventOperations Events { get; private set; } = null!;
 
         /// <inheritdoc />
-        public IFundraiserOperations Fundraisers { get; }
+        public IFundraiserOperations Fundraisers { get; private set; } = null!;
 
         /// <inheritdoc />
-        public IDonorPortalOperations DonorPortal { get; }
+        public IDonorPortalOperations DonorPortal { get; private set; } = null!;
 
         /// <inheritdoc />
         public void Dispose()
