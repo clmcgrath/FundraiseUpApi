@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Updated GitHub Actions**: Upgraded all actions to latest versions (checkout@v4, setup-dotnet@v4, cache@v4, gitversion@v4.1.0, gh-release@v2, github-script@v7)
 - **GitVersion 6.4.0 Upgrade**: Updated from 5.12.0 to 6.4.0 for improved performance, .NET 8 compatibility, and latest semantic versioning features
 - **GitVersion Configuration Fix**: Added configFilePath parameter to ensure GitVersion.yml is read by v4.1.0 actions (fixes version mismatch between local and CI)
+- **Immutable Release Support**: Modified release workflow for atomic release creation compatible with GitHub's immutable release branch protection rules
 - **Artifact Management**: Build artifacts shared between jobs for faster test execution
 - **Visual Status Indicators**: Emoji-enhanced job names for better CI/CD visibility (🏗️ Build, 🧪 Test)
 
