@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Build & Development Infrastructure
 - **Fixed GitVersion Configuration**: Resolved CI/CD failures with proper GitVersion 5.x configuration and branch naming
 - **Enhanced GitHub Actions Permissions**: Added required permissions for test reporting and PR status checks
+- **Release Workflow Permissions**: Fixed workflow_call permissions issue by granting statuses:write to build-test.yml calls
 - **Artifact Management**: Build artifacts shared between jobs for faster test execution
 - **Visual Status Indicators**: Emoji-enhanced job names for better CI/CD visibility (🏗️ Build, 🧪 Test)
 
