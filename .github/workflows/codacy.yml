@@ -1,0 +1,83 @@
+name: Codacy Analysis
+
+on:
+  push:
+    branches: [ master, stable, dev, 'release/**' ]
+  pull_request:
+    branches: [ master, stable, dev, 'release/**' ]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  # Reuse the build-test workflow for consistent build/test process
+  build-and-test:
+    name: 🏗️ Build & Test
+    uses: ./.github/workflows/build-test.yml
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+      statuses: write
+
+  codacy-security-scan:
+    name: 🔍 Codacy Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          verbose: true
+          # Removed SARIF output to avoid conflicts with GitHub Code Scanning
+          # Codacy results are available on the Codacy dashboard
+          max-allowed-issues: 2147483647
+
+      # Note: CodeQL runs separately via GitHub's automatic security analysis
+      # This provides complementary coverage:
+      # - CodeQL: GitHub-native security scanning (auto-runs)
+      # - Codacy: Comprehensive code quality + additional security tools
+      # Both approaches together provide comprehensive coverage
+  
+  codacy-coverage:
+    name: 📊 Codacy Coverage Report
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    strategy:
+      matrix:
+        dotnet-version: ['6.0.x', '8.0.x']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+      
+      - name: Restore dependencies
+        run: dotnet restore
+      
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+      
+      - name: Test with Coverage
+        run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+      
+      - name: Upload coverage to Codacy
+        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: '**/coverage.cobertura.xml'
