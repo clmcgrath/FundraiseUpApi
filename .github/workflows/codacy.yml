@@ -2,9 +2,9 @@ name: Codacy Analysis
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, stable, dev ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master, stable, dev ]
 
 permissions:
   contents: read
