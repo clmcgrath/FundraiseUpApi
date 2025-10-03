@@ -198,6 +198,12 @@ jobs:
     needs: validate-release
     if: needs.validate-release.outputs.should_release == 'true'
     uses: ./.github/workflows/build-test.yml
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+      statuses: write
     secrets: inherit
 
   # Create GitHub Release and publish packages
