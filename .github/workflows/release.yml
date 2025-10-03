@@ -175,12 +175,16 @@ jobs:
         if git tag --list | grep -q "^v$CURRENT_VERSION$"; then
           echo "⚠️ Version $CURRENT_VERSION already exists as a tag"
           echo "should_release=false" >> $GITHUB_OUTPUT
-        elif [[ "$CURRENT_VERSION" == *"-"* ]] && [[ "$EVENT_NAME" != "workflow_dispatch" ]]; then
-          echo "⚠️ Pre-release version $CURRENT_VERSION - skipping automatic release"
-          echo "should_release=false" >> $GITHUB_OUTPUT
         else
           echo "✅ Should create release for version $CURRENT_VERSION"
           echo "should_release=true" >> $GITHUB_OUTPUT
+          
+          # Determine publishing strategy
+          if [[ "$CURRENT_VERSION" == *"-beta"* ]] || [[ "$CURRENT_VERSION" == *"-rc"* ]] || [[ "$CURRENT_VERSION" != *"-"* ]]; then
+            echo "📦 Will publish to NuGet.org + GitHub Packages (beta/rc/stable)"
+          else
+            echo "📦 Will publish to GitHub Packages only (development/alpha)"
+          fi
         fi
 
     - name: Extract release notes from CHANGELOG
