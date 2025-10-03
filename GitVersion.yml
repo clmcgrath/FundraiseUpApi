@@ -8,10 +8,15 @@ commit-message-incrementing: Enabled
 
 ignore:
   paths:
-    - docs/**
-    - .github/**
-    - test/**
-    - README.md
+    - ^docs/.*
+    - ^\.github/.*
+    - ^tests?/.*
+    - ^README\.md$
+    - ^CHANGELOG\.md$
+    - ^LICENSE$
+    - ^\.editorconfig$
+    - ^\.gitignore$
+    - .*\.md$
 
 branches:
   master:
@@ -37,25 +42,24 @@ branches:
   feature:
     label: alpha
     increment: Minor
-    regex: ^feature[/-].+
+    regex: ^feature[/-].*
     source-branches: ['dev', 'master']
     
   hotfix:
     label: hotfix
     increment: Patch
-    regex: ^hotfix[/-].+
+    regex: ^hotfix[/-].*
     source-branches: ['master']
     
   support:
-
     label: support
     increment: None
-    regex: ^support[/-].+
+    regex: ^support[/-].*
     source-branches: ['master']
     
   release:
     label: rc
     increment: None
-    regex: ^release[/-].+
+    regex: ^release[/-].*
     source-branches: ['dev']
     is-release-branch: true
