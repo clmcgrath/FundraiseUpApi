@@ -81,16 +81,16 @@ jobs:
 
     - name: Apply Version Override
       id: version
+      env:
+        AUTO_VERSION: ${{ steps.version_auto.outputs.semVer }}
+        AUTO_MAJOR: ${{ steps.version_auto.outputs.major }}
+        AUTO_MINOR: ${{ steps.version_auto.outputs.minor }}
+        AUTO_PATCH: ${{ steps.version_auto.outputs.patch }}
+        AUTO_PRERELEASE: ${{ steps.version_auto.outputs.preReleaseTag }}
+        AUTO_BUILD: ${{ steps.version_auto.outputs.buildMetaData }}
+        RELEASE_TYPE: ${{ github.event.inputs.release_type || 'auto' }}
       run: |
-        # Get automatic version from GitVersion
-        AUTO_VERSION="${{ steps.version_auto.outputs.semVer }}"
-        AUTO_MAJOR="${{ steps.version_auto.outputs.major }}"
-        AUTO_MINOR="${{ steps.version_auto.outputs.minor }}"
-        AUTO_PATCH="${{ steps.version_auto.outputs.patch }}"
-        AUTO_PRERELEASE="${{ steps.version_auto.outputs.preReleaseTag }}"
-        AUTO_BUILD="${{ steps.version_auto.outputs.buildMetaData }}"
-        
-        RELEASE_TYPE="${{ github.event.inputs.release_type || 'auto' }}"
+        # Get automatic version from GitVersion (now from environment variables)
         
         echo "🔍 Release type: $RELEASE_TYPE"
         echo "🤖 Auto version: $AUTO_VERSION"
@@ -334,16 +334,16 @@ jobs:
 
     - name: Apply Version Override
       id: version
+      env:
+        AUTO_VERSION: ${{ steps.version_auto.outputs.semVer }}
+        AUTO_MAJOR: ${{ steps.version_auto.outputs.major }}
+        AUTO_MINOR: ${{ steps.version_auto.outputs.minor }}
+        AUTO_PATCH: ${{ steps.version_auto.outputs.patch }}
+        AUTO_PRERELEASE: ${{ steps.version_auto.outputs.preReleaseTag }}
+        AUTO_BUILD: ${{ steps.version_auto.outputs.buildMetaData }}
+        RELEASE_TYPE: ${{ github.event.inputs.release_type || 'auto' }}
       run: |
-        # Get automatic version from GitVersion
-        AUTO_VERSION="${{ steps.version_auto.outputs.semVer }}"
-        AUTO_MAJOR="${{ steps.version_auto.outputs.major }}"
-        AUTO_MINOR="${{ steps.version_auto.outputs.minor }}"
-        AUTO_PATCH="${{ steps.version_auto.outputs.patch }}"
-        AUTO_PRERELEASE="${{ steps.version_auto.outputs.preReleaseTag }}"
-        AUTO_BUILD="${{ steps.version_auto.outputs.buildMetaData }}"
-        
-        RELEASE_TYPE="${{ github.event.inputs.release_type || 'auto' }}"
+        # Get automatic version from GitVersion (now from environment variables)
         
         echo "🔍 Release type: $RELEASE_TYPE"
         echo "🤖 Auto version: $AUTO_VERSION"
@@ -424,15 +424,20 @@ jobs:
           --results-directory ./test-results
 
     - name: Create NuGet Packages
+      env:
+        PACKAGE_VERSION: ${{ steps.version.outputs.semVer }}
+        REPOSITORY_COMMIT: ${{ github.sha }}
+        REPOSITORY_BRANCH: ${{ github.ref_name }}
+        REPOSITORY_URL: https://github.com/${{ github.repository }}
       run: |
         dotnet pack \
           --configuration Release \
           --no-build \
           --output ./packages \
-          -p:PackageVersion=${{ steps.version.outputs.semVer }} \
-          -p:RepositoryCommit=${{ github.sha }} \
-          -p:RepositoryBranch=${{ github.ref_name }} \
-          -p:RepositoryUrl=https://github.com/${{ github.repository }}
+          -p:PackageVersion=$PACKAGE_VERSION \
+          -p:RepositoryCommit=$REPOSITORY_COMMIT \
+          -p:RepositoryBranch=$REPOSITORY_BRANCH \
+          -p:RepositoryUrl=$REPOSITORY_URL
 
     - name: Validate Package Contents
       run: |
