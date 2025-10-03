@@ -206,16 +206,16 @@ jobs:
       statuses: write
     secrets: inherit
 
-  # Create GitHub Release and publish packages
-  release:
-    name: 🚀 Create Release & Publish
+  # Create GitHub Release
+  create-release:
+    name: 🚀 Create GitHub Release
     runs-on: ubuntu-latest
     needs: [validate-release, build-and-test]
     if: needs.validate-release.outputs.should_release == 'true'
     
-    environment:
-      name: production
-      url: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate-release.outputs.version }}
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      version: ${{ steps.version.outputs.semVer }}
     
     steps:
     - uses: actions/checkout@v4
@@ -417,30 +417,12 @@ jobs:
         fail_on_unmatched_files: false
         make_latest: ${{ !contains(steps.version.outputs.semVer, '-') }}
 
-    - name: Publish to GitHub Packages
-      run: |
-        echo "🚀 Publishing to GitHub Packages..."
-        dotnet nuget push "./packages/*.nupkg" \
-          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
-          --api-key ${{ secrets.GITHUB_TOKEN }} \
-          --skip-duplicate \
-          --no-symbols
-
-    - name: Publish to NuGet.org
-      if: success() && (!contains(steps.version.outputs.semVer, '-') || contains(steps.version.outputs.semVer, '-beta') || contains(steps.version.outputs.semVer, '-rc'))
-      run: |
-        echo "🚀 Publishing to NuGet.org..."
-        if [[ "${{ steps.version.outputs.semVer }}" == *"-beta"* ]]; then
-          echo "📦 Publishing beta version to NuGet.org"
-        elif [[ "${{ steps.version.outputs.semVer }}" == *"-rc"* ]]; then
-          echo "📦 Publishing release candidate to NuGet.org"
-        else
-          echo "📦 Publishing stable version to NuGet.org"
-        fi
-        dotnet nuget push "./packages/*.nupkg" \
-          --source "https://api.nuget.org/v3/index.json" \
-          --api-key ${{ secrets.NUGET_API_KEY }} \
-          --skip-duplicate
+    - name: Upload Package Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./packages/
+        retention-days: 7
 
     - name: Update CHANGELOG
       if: success()
@@ -515,11 +497,64 @@ jobs:
             Thank you for your contribution! 🚀`
           });
 
+  # Publish to GitHub Packages
+  publish-github-packages:
+    name: 📦 Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: needs.create-release.result == 'success'
+    
+    steps:
+    - name: Download Package Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./packages
+
+    - name: Publish to GitHub Packages
+      run: |
+        echo "🚀 Publishing to GitHub Packages..."
+        dotnet nuget push "./packages/*.nupkg" \
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          --api-key ${{ secrets.GITHUB_TOKEN }} \
+          --skip-duplicate \
+          --no-symbols
+
+  # Publish to NuGet.org
+  publish-nuget-org:
+    name: 📦 Publish to NuGet.org
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: needs.create-release.result == 'success' && (!contains(needs.create-release.outputs.version, '-') || contains(needs.create-release.outputs.version, '-beta') || contains(needs.create-release.outputs.version, '-rc'))
+    
+    steps:
+    - name: Download Package Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./packages
+
+    - name: Publish to NuGet.org
+      run: |
+        VERSION="${{ needs.create-release.outputs.version }}"
+        echo "🚀 Publishing to NuGet.org..."
+        if [[ "$VERSION" == *"-beta"* ]]; then
+          echo "📦 Publishing beta version to NuGet.org"
+        elif [[ "$VERSION" == *"-rc"* ]]; then
+          echo "📦 Publishing release candidate to NuGet.org"
+        else
+          echo "📦 Publishing stable version to NuGet.org"
+        fi
+        dotnet nuget push "./packages/*.nupkg" \
+          --source "https://api.nuget.org/v3/index.json" \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --skip-duplicate
+
   # Post-release validation
   post-release-validation:
     name: ✅ Post-Release Validation
     runs-on: ubuntu-latest
-    needs: [validate-release, release]
+    needs: [validate-release, create-release, publish-github-packages, publish-nuget-org]
     if: always() && needs.validate-release.outputs.should_release == 'true'
     
     steps:
@@ -570,7 +605,7 @@ jobs:
         echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Version:** v$VERSION" >> $GITHUB_STEP_SUMMARY
-        echo "**Status:** ${{ needs.release.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Status:** ${{ needs.create-release.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📦 Packages Published" >> $GITHUB_STEP_SUMMARY
         echo "- 🐙 GitHub Packages" >> $GITHUB_STEP_SUMMARY
