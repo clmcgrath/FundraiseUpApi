@@ -2,7 +2,7 @@ name: 🚀 Release
 
 on:
   pull_request:
-    branches: [ master, stable ]
+    branches: [ master, stable, dev, 'release/**' ]
     types: [ closed ]
   workflow_dispatch:
     inputs:
@@ -43,11 +43,16 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       (github.event.pull_request.merged == true && 
-       (contains(github.event.pull_request.base.ref, 'master') || contains(github.event.pull_request.base.ref, 'stable'))) ||
+       (contains(github.event.pull_request.base.ref, 'master') || 
+        contains(github.event.pull_request.base.ref, 'stable') || 
+        contains(github.event.pull_request.base.ref, 'dev') || 
+        startsWith(github.event.pull_request.base.ref, 'release/'))) ||
       (github.event_name == 'workflow_dispatch' && 
        (github.event.inputs.force_release == 'true' || 
         contains(github.ref_name, 'master') || 
-        contains(github.ref_name, 'stable')))
+        contains(github.ref_name, 'stable') || 
+        contains(github.ref_name, 'dev') || 
+        startsWith(github.ref_name, 'release/')))
     
     outputs:
       should_release: ${{ steps.check.outputs.should_release }}
@@ -116,7 +121,13 @@ jobs:
         # Set all GitVersion outputs, using override version where applicable
         echo "semVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
         echo "assemblySemVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
-        echo "assemblySemFileVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        # Create 4-part version for assemblySemFileVer (major.minor.patch.0)
+        if [[ "$OVERRIDE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+          FILE_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.0"
+          echo "assemblySemFileVer=$FILE_VERSION" >> $GITHUB_OUTPUT
+        else
+          echo "assemblySemFileVer=$OVERRIDE_VERSION.0" >> $GITHUB_OUTPUT
+        fi
         echo "informationalVersion=$OVERRIDE_VERSION+$AUTO_BUILD" >> $GITHUB_OUTPUT
         
         # Extract version parts from override version
@@ -152,7 +163,7 @@ jobs:
         # Branch protection validation
         IS_PROTECTED_BRANCH="false"
         
-        if [[ "$CURRENT_BRANCH" == "master" || "$CURRENT_BRANCH" == "stable" ]]; then
+        if [[ "$CURRENT_BRANCH" == "master" || "$CURRENT_BRANCH" == "stable" || "$CURRENT_BRANCH" == "dev" || "$CURRENT_BRANCH" == release/* ]]; then
           IS_PROTECTED_BRANCH="true"
           echo "✅ Release from protected branch: $CURRENT_BRANCH"
         elif [[ "$FORCE_RELEASE" == "true" ]]; then
@@ -161,7 +172,7 @@ jobs:
           echo "branch_protection_bypassed=true" >> $GITHUB_OUTPUT
         elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
           echo "❌ Manual release from non-protected branch '$CURRENT_BRANCH' requires force_release=true"
-          echo "💡 Protected branches: master, stable"
+          echo "💡 Protected branches: master, stable, dev, release/*"
           echo "should_release=false" >> $GITHUB_OUTPUT
           echo "::error::Cannot create release from '$CURRENT_BRANCH'. Use force_release=true to bypass branch protection, or release from master/stable branches."
           exit 0
@@ -175,12 +186,16 @@ jobs:
         if git tag --list | grep -q "^v$CURRENT_VERSION$"; then
           echo "⚠️ Version $CURRENT_VERSION already exists as a tag"
           echo "should_release=false" >> $GITHUB_OUTPUT
-        elif [[ "$CURRENT_VERSION" == *"-"* ]] && [[ "$EVENT_NAME" != "workflow_dispatch" ]]; then
-          echo "⚠️ Pre-release version $CURRENT_VERSION - skipping automatic release"
-          echo "should_release=false" >> $GITHUB_OUTPUT
         else
           echo "✅ Should create release for version $CURRENT_VERSION"
           echo "should_release=true" >> $GITHUB_OUTPUT
+          
+          # Determine publishing strategy
+          if [[ "$CURRENT_VERSION" == *"-beta"* ]] || [[ "$CURRENT_VERSION" == *"-rc"* ]] || [[ "$CURRENT_VERSION" != *"-"* ]]; then
+            echo "📦 Will publish to NuGet.org + GitHub Packages (beta/rc/stable)"
+          else
+            echo "📦 Will publish to GitHub Packages only (development/alpha)"
+          fi
         fi
 
     - name: Extract release notes from CHANGELOG
@@ -369,7 +384,13 @@ jobs:
         # Set all GitVersion outputs, using override version where applicable
         echo "semVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
         echo "assemblySemVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
-        echo "assemblySemFileVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        # Create 4-part version for assemblySemFileVer (major.minor.patch.0)
+        if [[ "$OVERRIDE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+          FILE_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.0"
+          echo "assemblySemFileVer=$FILE_VERSION" >> $GITHUB_OUTPUT
+        else
+          echo "assemblySemFileVer=$OVERRIDE_VERSION.0" >> $GITHUB_OUTPUT
+        fi
         echo "informationalVersion=$OVERRIDE_VERSION+$AUTO_BUILD" >> $GITHUB_OUTPUT
         
         # Extract version parts from override version
@@ -405,8 +426,8 @@ jobs:
         dotnet build \
           --configuration Release \
           --no-restore \
-          -p:Version=${{ steps.version.outputs.assemblySemVer }} \
-          -p:AssemblyVersion=${{ steps.version.outputs.assemblySemVer }} \
+          -p:Version=${{ steps.version.outputs.semVer }} \
+          -p:AssemblyVersion=${{ steps.version.outputs.assemblySemFileVer }} \
           -p:FileVersion=${{ steps.version.outputs.assemblySemFileVer }} \
           -p:InformationalVersion=${{ steps.version.outputs.informationalVersion }} \
           -p:ContinuousIntegrationBuild=true \
