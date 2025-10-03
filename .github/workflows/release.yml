@@ -121,7 +121,13 @@ jobs:
         # Set all GitVersion outputs, using override version where applicable
         echo "semVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
         echo "assemblySemVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
-        echo "assemblySemFileVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        # Create 4-part version for assemblySemFileVer (major.minor.patch.0)
+        if [[ "$OVERRIDE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+          FILE_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.0"
+          echo "assemblySemFileVer=$FILE_VERSION" >> $GITHUB_OUTPUT
+        else
+          echo "assemblySemFileVer=$OVERRIDE_VERSION.0" >> $GITHUB_OUTPUT
+        fi
         echo "informationalVersion=$OVERRIDE_VERSION+$AUTO_BUILD" >> $GITHUB_OUTPUT
         
         # Extract version parts from override version
@@ -378,7 +384,13 @@ jobs:
         # Set all GitVersion outputs, using override version where applicable
         echo "semVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
         echo "assemblySemVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
-        echo "assemblySemFileVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        # Create 4-part version for assemblySemFileVer (major.minor.patch.0)
+        if [[ "$OVERRIDE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+          FILE_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.0"
+          echo "assemblySemFileVer=$FILE_VERSION" >> $GITHUB_OUTPUT
+        else
+          echo "assemblySemFileVer=$OVERRIDE_VERSION.0" >> $GITHUB_OUTPUT
+        fi
         echo "informationalVersion=$OVERRIDE_VERSION+$AUTO_BUILD" >> $GITHUB_OUTPUT
         
         # Extract version parts from override version
