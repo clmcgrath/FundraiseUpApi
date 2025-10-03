@@ -44,12 +44,18 @@ jobs:
     if: |
       (github.event.pull_request.merged == true && 
        (contains(github.event.pull_request.base.ref, 'master') || contains(github.event.pull_request.base.ref, 'stable'))) ||
-      github.event_name == 'workflow_dispatch'
+      (github.event_name == 'workflow_dispatch' && 
+       (github.event.inputs.force_release == 'true' || 
+        contains(github.ref_name, 'master') || 
+        contains(github.ref_name, 'stable')))
     
     outputs:
       should_release: ${{ steps.check.outputs.should_release }}
       version: ${{ steps.version.outputs.semVer }}
       release_notes: ${{ steps.notes.outputs.release_notes }}
+      branch_protection_bypassed: ${{ steps.check.outputs.branch_protection_bypassed }}
+      is_protected_branch: ${{ steps.check.outputs.is_protected_branch }}
+      force_release_used: ${{ steps.check.outputs.force_release_used }}
       
     steps:
     - uses: actions/checkout@v4
@@ -136,6 +142,31 @@ jobs:
         echo "Current version: ${{ steps.version.outputs.semVer }}"
         echo "Branch: ${{ github.ref_name }}"
         echo "Event: ${{ github.event_name }}"
+        echo "Force release: ${{ github.event.inputs.force_release || 'false' }}"
+        
+        # Branch protection validation
+        CURRENT_BRANCH="${{ github.ref_name }}"
+        FORCE_RELEASE="${{ github.event.inputs.force_release || 'false' }}"
+        IS_PROTECTED_BRANCH="false"
+        
+        if [[ "$CURRENT_BRANCH" == "master" || "$CURRENT_BRANCH" == "stable" ]]; then
+          IS_PROTECTED_BRANCH="true"
+          echo "✅ Release from protected branch: $CURRENT_BRANCH"
+        elif [[ "$FORCE_RELEASE" == "true" ]]; then
+          echo "🚨 FORCE RELEASE: Bypassing branch protection for branch: $CURRENT_BRANCH"
+          echo "⚠️  This release is being created from a non-protected branch with force_release=true"
+          echo "branch_protection_bypassed=true" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "❌ Manual release from non-protected branch '$CURRENT_BRANCH' requires force_release=true"
+          echo "💡 Protected branches: master, stable"
+          echo "should_release=false" >> $GITHUB_OUTPUT
+          echo "::error::Cannot create release from '$CURRENT_BRANCH'. Use force_release=true to bypass branch protection, or release from master/stable branches."
+          exit 0
+        fi
+        
+        # Set branch protection status for later use
+        echo "is_protected_branch=$IS_PROTECTED_BRANCH" >> $GITHUB_OUTPUT
+        echo "force_release_used=$FORCE_RELEASE" >> $GITHUB_OUTPUT
         
         # Check if this version already exists as a tag
         if git tag --list | grep -q "^v${{ steps.version.outputs.semVer }}$"; then
@@ -480,7 +511,18 @@ jobs:
           - Override Type: {0}
           - Final Version: v{1}
           
-          ', github.event.inputs.release_type, steps.version.outputs.semVer) || '' }}## 📦 Installation
+          ', github.event.inputs.release_type, steps.version.outputs.semVer) || '' }}${{ needs.validate-release.outputs.branch_protection_bypassed == 'true' && format('## 🚨 Branch Protection Bypass
+
+          **⚠️  IMPORTANT SECURITY NOTICE**
+          
+          This release was created with `force_release=true`, bypassing normal branch protection rules.
+          - Source Branch: {0}
+          - Released By: @{1}
+          - Bypass Reason: Manual override requested
+          
+          This release should be reviewed carefully as it was not created through the standard protected branch workflow.
+          
+          ', github.ref_name, github.actor) || '' }}## 📦 Installation
           
           ### NuGet Package Manager
           ```powershell
@@ -528,7 +570,8 @@ jobs:
           ### Release Statistics
           - **Build Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
           - **Commit**: ${{ github.sha }}
-          - **Branch**: ${{ github.ref_name }}
+          - **Branch**: ${{ github.ref_name }} ${{ needs.validate-release.outputs.is_protected_branch == 'true' && '(protected)' || '(unprotected)' }}
+          - **Branch Protection**: ${{ needs.validate-release.outputs.force_release_used == 'true' && '⚠️ Bypassed with force_release=true' || '✅ Enforced' }}
           - **Workflow**: ${{ github.run_id }}
         files: ./release-assets/*
         draft: false
