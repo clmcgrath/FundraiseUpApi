@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -16,7 +17,7 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
     public class HttpMockBuilder
     {
         private readonly Mock<HttpMessageHandler> _mockHandler;
-        private readonly List<HttpRequestMessage> _requests = new List<HttpRequestMessage>();
+        private readonly ConcurrentBag<HttpRequestMessage> _requests = new ConcurrentBag<HttpRequestMessage>();
         private int _callCount = 0;
 
         public HttpMockBuilder()
@@ -32,7 +33,7 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// <summary>
         /// Gets all requests that were made
         /// </summary>
-        public IReadOnlyList<HttpRequestMessage> Requests => _requests.AsReadOnly();
+        public IReadOnlyList<HttpRequestMessage> Requests => _requests.ToArray();
 
         #region Response Setup Methods
 
