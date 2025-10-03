@@ -426,8 +426,8 @@ jobs:
         dotnet build \
           --configuration Release \
           --no-restore \
-          -p:Version=${{ steps.version.outputs.assemblySemVer }} \
-          -p:AssemblyVersion=${{ steps.version.outputs.assemblySemVer }} \
+          -p:Version=${{ steps.version.outputs.semVer }} \
+          -p:AssemblyVersion=${{ steps.version.outputs.assemblySemFileVer }} \
           -p:FileVersion=${{ steps.version.outputs.assemblySemFileVer }} \
           -p:InformationalVersion=${{ steps.version.outputs.informationalVersion }} \
           -p:ContinuousIntegrationBuild=true \
