@@ -138,15 +138,18 @@ jobs:
 
     - name: Check if release should be created
       id: check
+      env:
+        CURRENT_VERSION: ${{ steps.version.outputs.semVer }}
+        CURRENT_BRANCH: ${{ github.ref_name }}
+        EVENT_NAME: ${{ github.event_name }}
+        FORCE_RELEASE: ${{ github.event.inputs.force_release || 'false' }}
       run: |
-        echo "Current version: ${{ steps.version.outputs.semVer }}"
-        echo "Branch: ${{ github.ref_name }}"
-        echo "Event: ${{ github.event_name }}"
-        echo "Force release: ${{ github.event.inputs.force_release || 'false' }}"
+        echo "Current version: $CURRENT_VERSION"
+        echo "Branch: $CURRENT_BRANCH"
+        echo "Event: $EVENT_NAME"
+        echo "Force release: $FORCE_RELEASE"
         
         # Branch protection validation
-        CURRENT_BRANCH="${{ github.ref_name }}"
-        FORCE_RELEASE="${{ github.event.inputs.force_release || 'false' }}"
         IS_PROTECTED_BRANCH="false"
         
         if [[ "$CURRENT_BRANCH" == "master" || "$CURRENT_BRANCH" == "stable" ]]; then
@@ -156,7 +159,7 @@ jobs:
           echo "🚨 FORCE RELEASE: Bypassing branch protection for branch: $CURRENT_BRANCH"
           echo "⚠️  This release is being created from a non-protected branch with force_release=true"
           echo "branch_protection_bypassed=true" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+        elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
           echo "❌ Manual release from non-protected branch '$CURRENT_BRANCH' requires force_release=true"
           echo "💡 Protected branches: master, stable"
           echo "should_release=false" >> $GITHUB_OUTPUT
@@ -169,14 +172,14 @@ jobs:
         echo "force_release_used=$FORCE_RELEASE" >> $GITHUB_OUTPUT
         
         # Check if this version already exists as a tag
-        if git tag --list | grep -q "^v${{ steps.version.outputs.semVer }}$"; then
-          echo "⚠️ Version ${{ steps.version.outputs.semVer }} already exists as a tag"
+        if git tag --list | grep -q "^v$CURRENT_VERSION$"; then
+          echo "⚠️ Version $CURRENT_VERSION already exists as a tag"
           echo "should_release=false" >> $GITHUB_OUTPUT
-        elif [[ "${{ steps.version.outputs.semVer }}" == *"-"* ]] && [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
-          echo "⚠️ Pre-release version ${{ steps.version.outputs.semVer }} - skipping automatic release"
+        elif [[ "$CURRENT_VERSION" == *"-"* ]] && [[ "$EVENT_NAME" != "workflow_dispatch" ]]; then
+          echo "⚠️ Pre-release version $CURRENT_VERSION - skipping automatic release"
           echo "should_release=false" >> $GITHUB_OUTPUT
         else
-          echo "✅ Should create release for version ${{ steps.version.outputs.semVer }}"
+          echo "✅ Should create release for version $CURRENT_VERSION"
           echo "should_release=true" >> $GITHUB_OUTPUT
         fi
 
