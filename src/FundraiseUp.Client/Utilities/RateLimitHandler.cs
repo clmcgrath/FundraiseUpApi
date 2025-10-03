@@ -44,13 +44,13 @@ namespace FundraiseUp.Client.Utilities
             switch (_options.RateLimitStrategy)
             {
                 case RateLimitStrategy.Exception:
-                    return await SendWithExceptionStrategy(request, cancellationToken);
+                    return await SendWithExceptionStrategy(request, cancellationToken).ConfigureAwait(false);
 
                 case RateLimitStrategy.Queue:
-                    return await SendWithQueueStrategy(request, cancellationToken);
+                    return await SendWithQueueStrategy(request, cancellationToken).ConfigureAwait(false);
 
                 case RateLimitStrategy.Retry:
-                    return await SendWithRetryStrategy(request, cancellationToken);
+                    return await SendWithRetryStrategy(request, cancellationToken).ConfigureAwait(false);
 
                 default:
                     throw new InvalidOperationException($"Unsupported rate limit strategy: {_options.RateLimitStrategy}");
@@ -77,7 +77,7 @@ namespace FundraiseUp.Client.Utilities
                 _logger?.LogDebug("Acquired rate limit slot. Current requests: {CurrentRequests}/{MaxRequests}",
                     _currentRequests, _options.MaxConcurrentRequests);
 
-                return await base.SendAsync(request, cancellationToken);
+                return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -106,7 +106,7 @@ namespace FundraiseUp.Client.Utilities
                 using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 timeoutCts.CancelAfter(_options.QueueTimeout);
 
-                var waitResult = await _semaphore.WaitAsync(_options.QueueTimeout, timeoutCts.Token);
+                var waitResult = await _semaphore.WaitAsync(_options.QueueTimeout, timeoutCts.Token).ConfigureAwait(false);
                 if (!waitResult)
                 {
                     _logger?.LogWarning("Request timed out waiting in queue after {QueueTimeout}", _options.QueueTimeout);
@@ -119,7 +119,7 @@ namespace FundraiseUp.Client.Utilities
                     _logger?.LogDebug("Processing queued request. Current requests: {CurrentRequests}/{MaxRequests}",
                         _currentRequests, _options.MaxConcurrentRequests);
 
-                    return await base.SendAsync(request, cancellationToken);
+                    return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -152,7 +152,7 @@ namespace FundraiseUp.Client.Utilities
                         _logger?.LogDebug("Acquired rate limit slot on attempt {Attempt}. Current requests: {CurrentRequests}/{MaxRequests}",
                             retryCount + 1, _currentRequests, _options.MaxConcurrentRequests);
 
-                        var response = await base.SendAsync(request, cancellationToken);
+                        var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
                         // Check if we got a 429 Too Many Requests response  
                         if ((int)response.StatusCode == 429)
@@ -167,7 +167,7 @@ namespace FundraiseUp.Client.Utilities
                                 _logger?.LogWarning("Received 429 Too Many Requests. Retrying after {Delay}ms (attempt {Attempt}/{MaxRetries})",
                                     delay.TotalMilliseconds, retryCount + 1, maxRetries);
 
-                                await Task.Delay(delay, cancellationToken);
+                                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                                 retryCount++;
                                 continue;
                             }
@@ -197,7 +197,7 @@ namespace FundraiseUp.Client.Utilities
                     _logger?.LogWarning("Rate limit exceeded. Retrying after {Delay}ms (attempt {Attempt}/{MaxRetries})",
                         delay.TotalMilliseconds, retryCount + 1, maxRetries);
 
-                    await Task.Delay(delay, cancellationToken);
+                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     retryCount++;
                 }
             }

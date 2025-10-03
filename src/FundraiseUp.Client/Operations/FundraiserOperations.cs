@@ -36,7 +36,7 @@ namespace FundraiseUp.Client.Operations
                 .WithOperation(async () =>
                 {
                     var endpoint = "/v1/fundraisers";
-                    return await _httpClient.PostAsync<FundraiserResponse>(endpoint, request);
+                    return await _httpClient.PostAsync<FundraiserResponse>(endpoint, request).ConfigureAwait(false);
                 });
         }
 
@@ -50,7 +50,7 @@ namespace FundraiseUp.Client.Operations
                 .WithOperation(async () =>
                 {
                     var endpoint = $"/v1/fundraisers/{fundraiserId}";
-                    return await _httpClient.GetAsync<FundraiserResponse>(endpoint);
+                    return await _httpClient.GetAsync<FundraiserResponse>(endpoint).ConfigureAwait(false);
                 });
         }
 
@@ -66,7 +66,7 @@ namespace FundraiseUp.Client.Operations
                 .WithOperation(async () =>
                 {
                     var endpoint = $"/v1/fundraisers/{fundraiserId}";
-                    return await _httpClient.PostAsync<FundraiserResponse>(endpoint, request);
+                    return await _httpClient.PostAsync<FundraiserResponse>(endpoint, request).ConfigureAwait(false);
                 });
         }
 
@@ -143,7 +143,7 @@ namespace FundraiseUp.Client.Operations
 
             try
             {
-                return await _operation();
+                return await _operation().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -292,7 +292,7 @@ namespace FundraiseUp.Client.Operations
                 if (queryParams.Count > 0)
                     endpoint += "?" + string.Join("&", queryParams);
 
-                var response = await _httpClient.GetAsync<CursorPagedResponse<FundraiserResponse>>(endpoint, _correlationId);
+                var response = await _httpClient.GetAsync<CursorPagedResponse<FundraiserResponse>>(endpoint, _correlationId).ConfigureAwait(false);
 
                 return new FundraisersResponse
                 {

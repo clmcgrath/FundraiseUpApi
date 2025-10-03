@@ -35,7 +35,7 @@ namespace FundraiseUp.Client.Operations
                 .WithOperation(async () =>
                 {
                     var endpoint = $"/v1/events/{eventId}";
-                    return await _httpClient.GetAsync<EventResponse>(endpoint);
+                    return await _httpClient.GetAsync<EventResponse>(endpoint).ConfigureAwait(false);
                 });
         }
 
@@ -112,7 +112,7 @@ namespace FundraiseUp.Client.Operations
 
             try
             {
-                return await _operation();
+                return await _operation().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -294,7 +294,7 @@ namespace FundraiseUp.Client.Operations
                 if (queryParams.Count > 0)
                     endpoint += "?" + string.Join("&", queryParams);
 
-                var response = await _httpClient.GetAsync<CursorPagedResponse<EventResponse>>(endpoint, _correlationId);
+                var response = await _httpClient.GetAsync<CursorPagedResponse<EventResponse>>(endpoint, _correlationId).ConfigureAwait(false);
 
                 return new EventsResponse
                 {

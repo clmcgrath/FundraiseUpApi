@@ -80,22 +80,8 @@ namespace FundraiseUp.Client
         /// <returns>The deserialized response.</returns>
         public async Task<T> GetAsync<T>(string endpoint, string? correlationId = null)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
-            if (!string.IsNullOrEmpty(correlationId))
-            {
-                request.Headers.Add("X-Correlation-ID", correlationId);
-            }
-
-            var response = await _httpClient.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger?.LogError("API request failed: {StatusCode} - {Content}", response.StatusCode, content);
-                ThrowAppropriateException(response.StatusCode, content);
-            }
-
-            return JsonSerializer.Deserialize<T>(content, JsonConfiguration.DefaultOptions)!;
+            using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            return await SendRequestAsync<T>(request, correlationId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -110,23 +96,9 @@ namespace FundraiseUp.Client
         {
             var json = JsonSerializer.Serialize(data, JsonConfiguration.DefaultOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var request = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = content };
-            if (!string.IsNullOrEmpty(correlationId))
-            {
-                request.Headers.Add("X-Correlation-ID", correlationId);
-            }
-
-            var response = await _httpClient.SendAsync(request);
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger?.LogError("API request failed: {StatusCode} - {Content}", response.StatusCode, responseContent);
-                ThrowAppropriateException(response.StatusCode, responseContent);
-            }
-
-            return JsonSerializer.Deserialize<T>(responseContent, JsonConfiguration.DefaultOptions)!;
+            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = content };
+            
+            return await SendRequestAsync<T>(request, correlationId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -141,15 +113,27 @@ namespace FundraiseUp.Client
         {
             var json = JsonSerializer.Serialize(data, JsonConfiguration.DefaultOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var request = new HttpRequestMessage(HttpMethod.Put, endpoint) { Content = content };
+            
+            return await SendRequestAsync<T>(request, correlationId).ConfigureAwait(false);
+        }
 
-            var request = new HttpRequestMessage(HttpMethod.Put, endpoint) { Content = content };
+        /// <summary>
+        /// Common method to send HTTP requests and handle responses.
+        /// </summary>
+        /// <typeparam name="T">The response type.</typeparam>
+        /// <param name="request">The HTTP request message.</param>
+        /// <param name="correlationId">Optional correlation ID.</param>
+        /// <returns>The deserialized response.</returns>
+        private async Task<T> SendRequestAsync<T>(HttpRequestMessage request, string? correlationId)
+        {
             if (!string.IsNullOrEmpty(correlationId))
             {
                 request.Headers.Add("X-Correlation-ID", correlationId);
             }
 
-            var response = await _httpClient.SendAsync(request);
-            var responseContent = await response.Content.ReadAsStringAsync();
+            using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
