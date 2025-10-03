@@ -7,17 +7,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-Standard%202.0%20%7C%20.NET%206+-512BD4.svg)](https://dotnet.microsoft.com/)
 
-A modern, fluent .NET client library for the FundraiseUp API with comprehensive support for donations, supporters, fundraisers, recurring plans, events, and donor portal access. Built with enterprise-grade reliability, dependency injection support, and full alignment with the official FundraiseUp API specification.
+A modern, fluent .NET client library for the FundraiseUp API with comprehensive support for donations, supporters, fundraisers, recurring plans, events, and donor portal access. Built with enterprise-grade reliability, production-ready async patterns, dependency injection support, and full alignment with the official FundraiseUp API specification.
 
 ## ✨ Features
 
 - **🎯 Fluent API Design** - Intuitive, discoverable interface with full IntelliSense support
 - **💉 Dependency Injection Ready** - Native Microsoft DI integration with configuration options
-- **⚡ Async-First Architecture** - All operations use async/await with CancellationToken support
+- **⚡ Production-Ready Async Architecture** - All operations use async/await with ConfigureAwait(false) for deadlock prevention and CancellationToken support
 - **🛡️ Enterprise-Grade Reliability** - Configurable retry policies, timeout handling, and comprehensive error handling
 - **⚡ Smart Rate Limiting** - Built-in rate limiting with Queue, Retry, and Exception strategies for FundraiseUp's 3 concurrent request limit
 - **🔄 Multi-Framework Support** - Targets .NET Standard 2.0 and .NET 6+ for maximum compatibility
-- **📊 Comprehensive Testing** - Extensive unit test coverage with mocking framework for contributors
+- **📊 Comprehensive Testing** - 172 tests across unit, integration, performance, and contract testing with professional mocking framework
 - **🔒 Security-First Design** - HTTPS enforcement, secure credential management
 - **📜 Type-Safe Operations** - Strongly typed request/response models with validation
 - **🔄 Cursor-Based Pagination** - Native support for FundraiseUp's cursor pagination
@@ -900,7 +900,8 @@ This library follows constitutional design principles:
 - **Microsoft DI Integration** - Native dependency injection with IOptions pattern
 - **Test-Driven Development** - Comprehensive test coverage with contract validation
 - **Enterprise-Grade Reliability** - Production-ready error handling and retry logic
-- **Async-First Architecture** - Modern async/await patterns throughout
+- **Production-Ready Async Architecture** - Modern async/await patterns with ConfigureAwait(false) throughout for deadlock prevention
+- **Thread-Safe Design** - Safe for use in ASP.NET, WPF, WinForms, and all SynchronizationContext environments
 - **Security-First Design** - Secure credential handling and HTTPS enforcement
 - **Performance Optimized** - Efficient resource management and connection pooling
 - **OpenAPI Compliant** - Strict adherence to API specifications
@@ -935,8 +936,11 @@ dotnet restore
 # Build the solution
 dotnet build --configuration Release
 
-# Run tests
+# Run all tests (172 tests across unit, integration, performance)
 dotnet test --configuration Release
+
+# Run with code coverage
+dotnet test --collect:"XPlat Code Coverage"
 ```
 
 ### Branching Model
@@ -955,7 +959,34 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - Testing requirements and quality gates
 - Pull request process and review guidelines
 
-## 📈 Roadmap
+## � Release Process
+
+This project uses automated releases triggered by merged pull requests to protected branches:
+
+### Automatic Releases
+- **Merge to `master`**: Creates stable release (e.g., `1.2.3`) → GitHub Packages + NuGet.org
+- **Merge to `stable`**: Creates release candidate (e.g., `1.2.3-rc.1`) → GitHub Packages + NuGet.org
+- **Merge to `dev`**: Creates beta release (e.g., `1.3.0-beta.1`) → GitHub Packages + NuGet.org
+- **Other branches**: Alpha releases (e.g., `1.3.0-alpha.1`) → GitHub Packages only
+
+### Manual Releases
+- Available via GitHub Actions → Release workflow → "Run workflow"
+- Includes options for force release and version override
+
+### Version Management
+- Versions calculated automatically using GitVersion
+- Based on conventional commit messages and branch names
+- See [GitVersion.yml](GitVersion.yml) for configuration
+
+### Release Artifacts
+- ✅ GitHub Release with automated release notes
+- ✅ NuGet packages (.nupkg) for all target frameworks
+- ✅ Symbol packages (.snupkg) for debugging
+- ✅ Published to GitHub Packages and NuGet.org
+
+For detailed setup instructions, see [.github/PRODUCTION_ENVIRONMENT.md](.github/PRODUCTION_ENVIRONMENT.md).
+
+## �📈 Roadmap
 
 - [ ] **v1.1** - Advanced filtering and search capabilities
 - [ ] **v1.2** - Enhanced caching and performance optimizations

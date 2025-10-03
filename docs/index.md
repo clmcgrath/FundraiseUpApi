@@ -16,7 +16,7 @@ permalink: /
 [![Build Status](https://github.com/clmcgrath/FundraiseUpApi/workflows/CI/badge.svg)](https://github.com/clmcgrath/FundraiseUpApi/actions)
 [![License](https://img.shields.io/github/license/clmcgrath/FundraiseUpApi.svg)](https://github.com/clmcgrath/FundraiseUpApi/blob/main/LICENSE)
 
-A modern, fluent .NET client library for consuming the FundraiseUp API with comprehensive support for all endpoints, dependency injection, and enterprise-grade reliability.
+A modern, fluent .NET client library for consuming the FundraiseUp API with comprehensive support for all endpoints, production-ready async patterns, dependency injection, and enterprise-grade reliability.
 
 {: .fs-6 .fw-300 }
 
@@ -28,7 +28,7 @@ A modern, fluent .NET client library for consuming the FundraiseUp API with comp
 
 - **Fluent API Design** - Intuitive, discoverable interface with IntelliSense support
 - **Dependency Injection Ready** - Native support for Microsoft DI with configuration options
-- **Async-First** - All operations use async/await patterns with CancellationToken support
+- **Production-Ready Async** - All operations use async/await with ConfigureAwait(false) for deadlock prevention and CancellationToken support
 - **Enterprise-Grade** - Configurable retry policies, rate limiting, and comprehensive error handling
 - **Multi-Framework** - Targets .NET Standard 2.0 and .NET 6+ for broad compatibility
 - **Comprehensive Logging** - Structured logging with Microsoft.Extensions.Logging
@@ -43,6 +43,7 @@ A modern, fluent .NET client library for consuming the FundraiseUp API with comp
 | [Rate Limiting & Connection Pooling](RATE_LIMITING_CONNECTION_POOLING.md) | Advanced performance optimization |
 | [Examples](EXAMPLES.md) | Common usage patterns and scenarios |
 | [API Reference](api-reference.md) | Complete method documentation |
+| [Production Readiness](production-readiness.md) | Thread safety, deadlock prevention, and enterprise deployment |
 | [Error Handling](error-handling.md) | Exception types and handling strategies |
 | [Performance Guide](performance.md) | Optimization tips and best practices |
 

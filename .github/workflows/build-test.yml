@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [ main, dev ]
   workflow_dispatch:
+  workflow_call:
+    # Allow this workflow to be called by other workflows
 
 # Required permissions for test reporting and PR comments
 permissions:
@@ -48,12 +50,14 @@ jobs:
           ${{ runner.os }}-nuget-
 
     - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v1.1.1
+
+      uses: gittools/actions/gitversion/setup@v4.1.0
       with:
-        versionSpec: '5.x'
+        versionSpec: '6.4.0'
 
     - name: Calculate Version
-      uses: gittools/actions/gitversion/execute@v1.1.1
+      uses: gittools/actions/gitversion/execute@v4.1.0
+
       id: gitversion
 
     - name: Restore dependencies
@@ -73,7 +77,8 @@ jobs:
           --configuration Release \
           --no-build \
           --output ./packages \
-          -p:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+          -p:PackageVersion=${{ steps.gitversion.outputs.semVer }}
+
 
     - name: Validate multi-target framework builds
       run: |

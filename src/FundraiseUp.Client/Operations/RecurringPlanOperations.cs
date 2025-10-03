@@ -35,7 +35,7 @@ namespace FundraiseUp.Client.Operations
                 .WithOperation(async () =>
                 {
                     var endpoint = $"/v1/recurring_plans/{recurringPlanId}";
-                    return await _httpClient.GetAsync<RecurringPlanResponse>(endpoint);
+                    return await _httpClient.GetAsync<RecurringPlanResponse>(endpoint).ConfigureAwait(false);
                 });
         }
 
@@ -119,7 +119,7 @@ namespace FundraiseUp.Client.Operations
                     // For now, we rely on the HttpClientWrapper to handle these settings
                 }
 
-                return await _operation();
+                return await _operation().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -240,7 +240,7 @@ namespace FundraiseUp.Client.Operations
                 if (queryParams.Count > 0)
                     endpoint += "?" + string.Join("&", queryParams);
 
-                var response = await _httpClient.GetAsync<CursorPagedResponse<RecurringPlanResponse>>(endpoint, _correlationId);
+                var response = await _httpClient.GetAsync<CursorPagedResponse<RecurringPlanResponse>>(endpoint, _correlationId).ConfigureAwait(false);
 
                 return new RecurringPlansResponse
                 {

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -16,7 +17,7 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
     public class HttpMockBuilder
     {
         private readonly Mock<HttpMessageHandler> _mockHandler;
-        private readonly List<HttpRequestMessage> _requests = new List<HttpRequestMessage>();
+        private readonly ConcurrentBag<HttpRequestMessage> _requests = new ConcurrentBag<HttpRequestMessage>();
         private int _callCount = 0;
 
         public HttpMockBuilder()
@@ -32,7 +33,7 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// <summary>
         /// Gets all requests that were made
         /// </summary>
-        public IReadOnlyList<HttpRequestMessage> Requests => _requests.AsReadOnly();
+        public IReadOnlyList<HttpRequestMessage> Requests => _requests.ToArray();
 
         #region Response Setup Methods
 
@@ -41,17 +42,25 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// </summary>
         public HttpMockBuilder SetupAnyRequest(HttpResponseMessage response)
         {
+            return SetupAnyRequest(() => CloneResponse(response));
+        }
+
+        /// <summary>
+        /// Sets up a mock response factory for any HTTP request
+        /// </summary>
+        public HttpMockBuilder SetupAnyRequest(Func<HttpResponseMessage> responseFactory)
+        {
             _mockHandler
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(response)
-                .Callback<HttpRequestMessage, CancellationToken>((request, _) =>
+                .Returns((HttpRequestMessage request, CancellationToken cancellationToken) =>
                 {
                     Interlocked.Increment(ref _callCount);
                     _requests.Add(request);
+                    return Task.FromResult(responseFactory());
                 });
 
             return this;
@@ -62,6 +71,14 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// </summary>
         public HttpMockBuilder SetupRequest(HttpMethod method, string urlPattern, HttpResponseMessage response)
         {
+            return SetupRequest(method, urlPattern, () => CloneResponse(response));
+        }
+
+        /// <summary>
+        /// Sets up a mock response factory for a specific HTTP method and URL pattern
+        /// </summary>
+        public HttpMockBuilder SetupRequest(HttpMethod method, string urlPattern, Func<HttpResponseMessage> responseFactory)
+        {
             _mockHandler
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
@@ -70,14 +87,48 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
                         req.Method == method &&
                         req.RequestUri!.AbsolutePath.Contains(urlPattern)),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(response)
-                .Callback<HttpRequestMessage, CancellationToken>((request, _) =>
+                .Returns((HttpRequestMessage request, CancellationToken cancellationToken) =>
                 {
                     Interlocked.Increment(ref _callCount);
                     _requests.Add(request);
+                    return Task.FromResult(responseFactory());
                 });
 
             return this;
+        }
+
+        /// <summary>
+        /// Creates a clone of an HttpResponseMessage to avoid sharing issues
+        /// </summary>
+        private static HttpResponseMessage CloneResponse(HttpResponseMessage original)
+        {
+            var clone = new HttpResponseMessage(original.StatusCode)
+            {
+                Version = original.Version,
+                ReasonPhrase = original.ReasonPhrase
+            };
+
+            // Clone headers
+            foreach (var header in original.Headers)
+            {
+                clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            // Clone content if present
+            if (original.Content != null)
+            {
+                var contentString = original.Content.ReadAsStringAsync().Result;
+                clone.Content = new StringContent(contentString, System.Text.Encoding.UTF8, 
+                    original.Content.Headers.ContentType?.MediaType ?? "application/json");
+                
+                // Clone content headers
+                foreach (var header in original.Content.Headers)
+                {
+                    clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                }
+            }
+
+            return clone;
         }
 
         /// <summary>
@@ -214,11 +265,7 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// </summary>
         public HttpMockBuilder AddSuccessResponse(string content = "{\"success\": true}")
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json")
-            };
-            return SetupAnyRequest(response);
+            return SetupResponseWithDelay(TimeSpan.Zero, content, HttpStatusCode.OK);
         }
 
         /// <summary>
@@ -226,11 +273,7 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// </summary>
         public HttpMockBuilder AddDelayedSuccessResponse(TimeSpan delay, string content = "{\"success\": true}")
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json")
-            };
-            return SetupDelayedRequest(delay, response);
+            return SetupResponseWithDelay(delay, content, HttpStatusCode.OK);
         }
 
         /// <summary>
@@ -238,11 +281,71 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// </summary>
         public HttpMockBuilder AddVariableLatencyResponse(TimeSpan minDelay, TimeSpan maxDelay, string content = "{\"success\": true}")
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            return SetupResponseWithVariableDelay(minDelay, maxDelay, content, HttpStatusCode.OK);
+        }
+
+        /// <summary>
+        /// Common method to set up a response with a fixed delay
+        /// </summary>
+        private HttpMockBuilder SetupResponseWithDelay(TimeSpan delay, string content, HttpStatusCode statusCode)
+        {
+            _mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .Returns(async (HttpRequestMessage request, CancellationToken cancellationToken) =>
+                {
+                    if (delay > TimeSpan.Zero)
+                    {
+                        await Task.Delay(delay, cancellationToken);
+                    }
+                    
+                    return CreateResponseWithTracking(request, content, statusCode);
+                });
+
+            return this;
+        }
+
+        /// <summary>
+        /// Common method to set up a response with variable delay
+        /// </summary>
+        private HttpMockBuilder SetupResponseWithVariableDelay(TimeSpan minDelay, TimeSpan maxDelay, string content, HttpStatusCode statusCode)
+        {
+            var random = new Random();
+            
+            _mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .Returns(async (HttpRequestMessage request, CancellationToken cancellationToken) =>
+                {
+                    // Generate random delay between min and max
+                    var delayMs = random.Next((int)minDelay.TotalMilliseconds, (int)maxDelay.TotalMilliseconds);
+                    await Task.Delay(delayMs, cancellationToken);
+                    
+                    return CreateResponseWithTracking(request, content, statusCode);
+                });
+
+            return this;
+        }
+
+        /// <summary>
+        /// Creates a response and handles call tracking
+        /// </summary>
+        private HttpResponseMessage CreateResponseWithTracking(HttpRequestMessage request, string content, HttpStatusCode statusCode)
+        {
+            Interlocked.Increment(ref _callCount);
+            _requests.Add(request);
+            
+            // Create a new response for each request to avoid sharing
+            return new HttpResponseMessage(statusCode)
             {
                 Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json")
             };
-            return SetupVariableLatencyRequest(minDelay, maxDelay, response);
         }
 
         /// <summary>
@@ -250,12 +353,23 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// </summary>
         public HttpMockBuilder Add429Response(string? retryAfter = null)
         {
-            var response = new HttpResponseMessage((HttpStatusCode)429);
-            if (!string.IsNullOrEmpty(retryAfter))
-            {
-                response.Headers.Add("Retry-After", retryAfter);
-            }
-            return SetupAnyRequest(response);
+            _mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .Returns((HttpRequestMessage request, CancellationToken cancellationToken) =>
+                {
+                    var response = CreateResponseWithTracking(request, "{\"error\": \"Too Many Requests\"}", (HttpStatusCode)429);
+                    if (!string.IsNullOrEmpty(retryAfter))
+                    {
+                        response.Headers.Add("Retry-After", retryAfter);
+                    }
+                    return Task.FromResult(response);
+                });
+
+            return this;
         }
 
         /// <summary>
@@ -264,11 +378,7 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         public HttpMockBuilder AddErrorResponse(HttpStatusCode statusCode, string? message = null)
         {
             var errorContent = message ?? GetDefaultErrorMessage(statusCode);
-            var response = new HttpResponseMessage(statusCode)
-            {
-                Content = new StringContent(errorContent, System.Text.Encoding.UTF8, "application/json")
-            };
-            return SetupAnyRequest(response);
+            return SetupResponseWithDelay(TimeSpan.Zero, errorContent, statusCode);
         }
 
         /// <summary>
@@ -276,24 +386,36 @@ namespace FundraiseUp.Client.Tests.TestHelpers.Mocking
         /// </summary>
         public HttpMockBuilder AddRateLimitSequence(int rateLimitCount, string? retryAfter = null)
         {
-            var responses = new List<HttpResponseMessage>();
-
-            for (int i = 0; i < rateLimitCount; i++)
-            {
-                var rateLimitResponse = new HttpResponseMessage((HttpStatusCode)429);
-                if (!string.IsNullOrEmpty(retryAfter))
+            var callCount = 0;
+            
+            _mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .Returns((HttpRequestMessage request, CancellationToken cancellationToken) =>
                 {
-                    rateLimitResponse.Headers.Add("Retry-After", retryAfter);
-                }
-                responses.Add(rateLimitResponse);
-            }
+                    var currentCall = Interlocked.Increment(ref callCount);
+                    
+                    if (currentCall <= rateLimitCount)
+                    {
+                        // Return 429 response for the first rateLimitCount calls
+                        var response = CreateResponseWithTracking(request, "{\"error\": \"Too Many Requests\"}", (HttpStatusCode)429);
+                        if (!string.IsNullOrEmpty(retryAfter))
+                        {
+                            response.Headers.Add("Retry-After", retryAfter);
+                        }
+                        return Task.FromResult(response);
+                    }
+                    else
+                    {
+                        // Return success response for subsequent calls
+                        return Task.FromResult(CreateResponseWithTracking(request, "{\"success\": true}", HttpStatusCode.OK));
+                    }
+                });
 
-            responses.Add(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("{\"success\": true}", System.Text.Encoding.UTF8, "application/json")
-            });
-
-            return SetupSequence(responses.ToArray());
+            return this;
         }
 
         #endregion

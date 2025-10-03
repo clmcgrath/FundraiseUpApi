@@ -36,7 +36,7 @@ namespace FundraiseUp.Client.Operations
             return new DonationOperationBuilder<DonationResponse>(_httpClient, _logger, async (correlationId) =>
             {
                 _logger?.LogInformation("Creating new donation with correlation ID: {CorrelationId}", correlationId);
-                return await _httpClient.PostAsync<DonationResponse>("/v1/donations", request, correlationId);
+                return await _httpClient.PostAsync<DonationResponse>("/v1/donations", request, correlationId).ConfigureAwait(false);
             });
         }
 
@@ -48,7 +48,7 @@ namespace FundraiseUp.Client.Operations
 
             return new DonationOperationBuilder<DonationResponse>(_httpClient, _logger, async (correlationId) =>
             {
-                return await _httpClient.GetAsync<DonationResponse>($"/v1/donations/{donationId}", correlationId);
+                return await _httpClient.GetAsync<DonationResponse>($"/v1/donations/{donationId}", correlationId).ConfigureAwait(false);
             });
         }
 
@@ -76,7 +76,7 @@ namespace FundraiseUp.Client.Operations
             return new DonationOperationBuilder<DonationResponse>(_httpClient, _logger, async (correlationId) =>
             {
                 _logger?.LogInformation("Updating donation {DonationId} with correlation ID: {CorrelationId}", donationId, correlationId);
-                return await _httpClient.PostAsync<DonationResponse>($"/v1/donations/{donationId}", request, correlationId);
+                return await _httpClient.PostAsync<DonationResponse>($"/v1/donations/{donationId}", request, correlationId).ConfigureAwait(false);
             });
         }
     }
@@ -131,7 +131,7 @@ namespace FundraiseUp.Client.Operations
         /// <inheritdoc />
         public async Task<TResult> ExecuteAsync()
         {
-            return await _operation(_correlationId);
+            return await _operation(_correlationId).ConfigureAwait(false);
         }
     }
 
@@ -246,7 +246,7 @@ namespace FundraiseUp.Client.Operations
             var queryString = string.Join("&", _queryParameters.Select(kvp => $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
             var endpoint = string.IsNullOrEmpty(queryString) ? "/v1/donations" : $"/v1/donations?{queryString}";
 
-            var response = await _httpClient.GetAsync<DonationsResponse>(endpoint, _correlationId);
+            var response = await _httpClient.GetAsync<DonationsResponse>(endpoint, _correlationId).ConfigureAwait(false);
 
             // Convert to PagedResult for backward compatibility
             return new PagedResult<DonationResponse>
