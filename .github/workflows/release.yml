@@ -67,11 +67,68 @@ jobs:
       with:
         versionSpec: '6.4.0'
 
-    - name: Calculate Version
-      id: version
+    - name: Calculate Version (Auto)
+      id: version_auto
       uses: gittools/actions/gitversion/execute@v4.1.0
       with:
         configFilePath: GitVersion.yml
+
+    - name: Apply Version Override
+      id: version
+      run: |
+        # Get automatic version from GitVersion
+        AUTO_VERSION="${{ steps.version_auto.outputs.semVer }}"
+        AUTO_MAJOR="${{ steps.version_auto.outputs.major }}"
+        AUTO_MINOR="${{ steps.version_auto.outputs.minor }}"
+        AUTO_PATCH="${{ steps.version_auto.outputs.patch }}"
+        AUTO_PRERELEASE="${{ steps.version_auto.outputs.preReleaseTag }}"
+        AUTO_BUILD="${{ steps.version_auto.outputs.buildMetaData }}"
+        
+        RELEASE_TYPE="${{ github.event.inputs.release_type || 'auto' }}"
+        
+        echo "🔍 Release type: $RELEASE_TYPE"
+        echo "🤖 Auto version: $AUTO_VERSION"
+        
+        # Apply manual override if specified
+        if [ "$RELEASE_TYPE" = "major" ]; then
+          NEW_MAJOR=$((AUTO_MAJOR + 1))
+          OVERRIDE_VERSION="${NEW_MAJOR}.0.0"
+          echo "🎯 Major override: $OVERRIDE_VERSION"
+        elif [ "$RELEASE_TYPE" = "minor" ]; then
+          NEW_MINOR=$((AUTO_MINOR + 1))
+          OVERRIDE_VERSION="${AUTO_MAJOR}.${NEW_MINOR}.0"
+          echo "🎯 Minor override: $OVERRIDE_VERSION"
+        elif [ "$RELEASE_TYPE" = "patch" ]; then
+          NEW_PATCH=$((AUTO_PATCH + 1))
+          OVERRIDE_VERSION="${AUTO_MAJOR}.${AUTO_MINOR}.${NEW_PATCH}"
+          echo "🎯 Patch override: $OVERRIDE_VERSION"
+        else
+          OVERRIDE_VERSION="$AUTO_VERSION"
+          echo "🤖 Using automatic version: $OVERRIDE_VERSION"
+        fi
+        
+        # Set all GitVersion outputs, using override version where applicable
+        echo "semVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        echo "assemblySemVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        echo "assemblySemFileVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        echo "informationalVersion=$OVERRIDE_VERSION+$AUTO_BUILD" >> $GITHUB_OUTPUT
+        
+        # Extract version parts from override version
+        if [[ "$OVERRIDE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-.*)?$ ]]; then
+          echo "major=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+          echo "minor=${BASH_REMATCH[2]}" >> $GITHUB_OUTPUT
+          echo "patch=${BASH_REMATCH[3]}" >> $GITHUB_OUTPUT
+          echo "preReleaseTag=${BASH_REMATCH[4]#-}" >> $GITHUB_OUTPUT
+        fi
+        
+        echo "buildMetaData=$AUTO_BUILD" >> $GITHUB_OUTPUT
+        echo "fullBuildMetaData=$AUTO_BUILD" >> $GITHUB_OUTPUT
+        echo "branchName=${{ steps.version_auto.outputs.branchName }}" >> $GITHUB_OUTPUT
+        echo "escapedBranchName=${{ steps.version_auto.outputs.escapedBranchName }}" >> $GITHUB_OUTPUT
+        echo "sha=${{ steps.version_auto.outputs.sha }}" >> $GITHUB_OUTPUT
+        echo "shortSha=${{ steps.version_auto.outputs.shortSha }}" >> $GITHUB_OUTPUT
+        
+        echo "✅ Final version: $OVERRIDE_VERSION"
 
     - name: Check if release should be created
       id: check
@@ -235,11 +292,68 @@ jobs:
       with:
         versionSpec: '6.4.0'
 
-    - name: Calculate Version
-      id: version
+    - name: Calculate Version (Auto)
+      id: version_auto
       uses: gittools/actions/gitversion/execute@v4.1.0
       with:
         configFilePath: GitVersion.yml
+
+    - name: Apply Version Override
+      id: version
+      run: |
+        # Get automatic version from GitVersion
+        AUTO_VERSION="${{ steps.version_auto.outputs.semVer }}"
+        AUTO_MAJOR="${{ steps.version_auto.outputs.major }}"
+        AUTO_MINOR="${{ steps.version_auto.outputs.minor }}"
+        AUTO_PATCH="${{ steps.version_auto.outputs.patch }}"
+        AUTO_PRERELEASE="${{ steps.version_auto.outputs.preReleaseTag }}"
+        AUTO_BUILD="${{ steps.version_auto.outputs.buildMetaData }}"
+        
+        RELEASE_TYPE="${{ github.event.inputs.release_type || 'auto' }}"
+        
+        echo "🔍 Release type: $RELEASE_TYPE"
+        echo "🤖 Auto version: $AUTO_VERSION"
+        
+        # Apply manual override if specified
+        if [ "$RELEASE_TYPE" = "major" ]; then
+          NEW_MAJOR=$((AUTO_MAJOR + 1))
+          OVERRIDE_VERSION="${NEW_MAJOR}.0.0"
+          echo "🎯 Major override: $OVERRIDE_VERSION"
+        elif [ "$RELEASE_TYPE" = "minor" ]; then
+          NEW_MINOR=$((AUTO_MINOR + 1))
+          OVERRIDE_VERSION="${AUTO_MAJOR}.${NEW_MINOR}.0"
+          echo "🎯 Minor override: $OVERRIDE_VERSION"
+        elif [ "$RELEASE_TYPE" = "patch" ]; then
+          NEW_PATCH=$((AUTO_PATCH + 1))
+          OVERRIDE_VERSION="${AUTO_MAJOR}.${AUTO_MINOR}.${NEW_PATCH}"
+          echo "🎯 Patch override: $OVERRIDE_VERSION"
+        else
+          OVERRIDE_VERSION="$AUTO_VERSION"
+          echo "🤖 Using automatic version: $OVERRIDE_VERSION"
+        fi
+        
+        # Set all GitVersion outputs, using override version where applicable
+        echo "semVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        echo "assemblySemVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        echo "assemblySemFileVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        echo "informationalVersion=$OVERRIDE_VERSION+$AUTO_BUILD" >> $GITHUB_OUTPUT
+        
+        # Extract version parts from override version
+        if [[ "$OVERRIDE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-.*)?$ ]]; then
+          echo "major=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+          echo "minor=${BASH_REMATCH[2]}" >> $GITHUB_OUTPUT
+          echo "patch=${BASH_REMATCH[3]}" >> $GITHUB_OUTPUT
+          echo "preReleaseTag=${BASH_REMATCH[4]#-}" >> $GITHUB_OUTPUT
+        fi
+        
+        echo "buildMetaData=$AUTO_BUILD" >> $GITHUB_OUTPUT
+        echo "fullBuildMetaData=$AUTO_BUILD" >> $GITHUB_OUTPUT
+        echo "branchName=${{ steps.version_auto.outputs.branchName }}" >> $GITHUB_OUTPUT
+        echo "escapedBranchName=${{ steps.version_auto.outputs.escapedBranchName }}" >> $GITHUB_OUTPUT
+        echo "sha=${{ steps.version_auto.outputs.sha }}" >> $GITHUB_OUTPUT
+        echo "shortSha=${{ steps.version_auto.outputs.shortSha }}" >> $GITHUB_OUTPUT
+        
+        echo "✅ Final version: $OVERRIDE_VERSION"
 
     - name: Cache NuGet packages
       uses: actions/cache@v4
@@ -360,7 +474,13 @@ jobs:
           
           ${{ needs.validate-release.outputs.release_notes }}
           
-          ## 📦 Installation
+          ${{ github.event.inputs.release_type && github.event.inputs.release_type != 'auto' && format('## 🎯 Manual Version Override
+
+          This release was created with a **{0}** version override, bypassing automatic version calculation.
+          - Override Type: {0}
+          - Final Version: v{1}
+          
+          ', github.event.inputs.release_type, steps.version.outputs.semVer) || '' }}## 📦 Installation
           
           ### NuGet Package Manager
           ```powershell
