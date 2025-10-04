@@ -21,9 +21,9 @@ Our development roadmap outlines planned features and improvements for the Fundr
 
 The FundraiseUpApi roadmap focuses on realistic, achievable goals that enhance developer experience while respecting the constraints and capabilities of the FundraiseUp REST API.
 
-## 📈 Upcoming Versions
+## 📈 Upcoming Features
 
-### v1.2 - Advanced Filtering and Search Capabilities
+### Advanced Filtering and Search Capabilities
 **Status**: Planned  
 **Focus**: Enhanced query capabilities within FundraiseUp API constraints
 
@@ -41,7 +41,7 @@ The FundraiseUpApi roadmap focuses on realistic, achievable goals that enhance d
 
 ---
 
-### v1.3 - Enhanced Caching and Performance Optimizations
+### Enhanced Caching and Performance Optimizations
 **Status**: Planned  
 **Focus**: Performance improvements and intelligent caching strategies
 
@@ -60,7 +60,7 @@ The FundraiseUpApi roadmap focuses on realistic, achievable goals that enhance d
 
 ---
 
-### v1.4 - Improved Error Handling and Retry Strategies  
+### Improved Error Handling and Retry Strategies  
 **Status**: Planned  
 **Focus**: Robust error handling and recovery mechanisms
 
@@ -79,7 +79,7 @@ The FundraiseUpApi roadmap focuses on realistic, achievable goals that enhance d
 
 ---
 
-### v2.0 - Modern .NET Features and Framework Updates
+### Modern .NET Features and Framework Updates
 **Status**: Future Planning  
 **Focus**: Leveraging latest .NET capabilities and framework modernization
 
@@ -130,28 +130,28 @@ The following features are intentionally **not** included in our roadmap:
 - ✅ **Complete**: HttpClientFactory integration with connection pooling
 - ✅ **Complete**: Professional documentation with GitHub Pages
 
-### Current Focus (v1.1 - In Progress)
+### Current Focus (Infrastructure & Quality)
 - 🔄 **In Progress**: CI/CD pipeline optimizations and workflow consolidation
 - 🔄 **In Progress**: Code quality improvements with enhanced coverage reporting
 - 🔄 **In Progress**: Testing infrastructure and reliability enhancements
 - 📋 **Planned**: Documentation updates and maintenance automation
 
 ### Short Term (Next 3-6 months)
-- 🎯 **v1.1**: Stability improvements and CI/CD optimizations (Current focus)
+- 🎯 **Current Priority**: Stability improvements and CI/CD optimizations
 - 📊 **Focus**: Code quality, testing coverage, and deployment pipeline enhancements
 
 ### Medium Term (6-12 months)  
-- 🎯 **v1.2**: Advanced filtering and search capabilities
+- 🎯 **Next Features**: Advanced filtering and search capabilities
 - 📊 **Focus**: Developer experience improvements and query flexibility
 
 ### Long Term (12-18 months)
-- 🎯 **v1.3**: Performance optimizations and caching
-- 🎯 **v1.4**: Enhanced error handling and retry strategies
+- 🎯 **Performance Focus**: Caching and performance optimizations
+- 🎯 **Resilience Focus**: Enhanced error handling and retry strategies
 - 📊 **Focus**: Performance, resilience, and scalability
 
 ### Future Planning (18+ months)
-- 🎯 **v2.0**: Modern .NET features and framework updates (.NET 10 LTS)
-- 📊 **Focus**: Framework modernization and architectural improvements
+- 🎯 **Modernization**: .NET framework updates and modern language features
+- 📊 **Focus**: Framework modernization when .NET 10 LTS is available (November 2025)
 
 ---
 
