@@ -187,12 +187,12 @@ jobs:
         echo "✅ All builds and tests passed successfully!"
         echo "🚀 Ready for merge"
 
-  # Upload coverage to Codacy during PR events
+  # Upload coverage to Codacy during PR events (internal PRs only to avoid secret access issues)
   codacy-coverage:
     name: Upload Coverage to Codacy
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && contains(github.ref, 'refs/heads/'))
+    if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'push' && contains(github.ref, 'refs/heads/'))
     
     steps:
       - name: Download all test results
