@@ -24,6 +24,7 @@ jobs:
   build:
     name: '🏗️ Build ${{ matrix.dotnet-version }}'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     strategy:
       matrix:
@@ -48,7 +49,6 @@ jobs:
           ${{ runner.os }}-nuget-
 
     - name: Install GitVersion
-
       uses: gittools/actions/gitversion/setup@v4.1.0
       with:
         versionSpec: '6.4.0'
@@ -98,6 +98,7 @@ jobs:
   test:
     name: '🧪 Test ${{ matrix.display-name }}'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: build
     
     strategy:
@@ -130,11 +131,14 @@ jobs:
         ls -la packages/ 2>/dev/null || echo "No packages directory found"
 
     - name: Install coverage tools
-      run: |
-        dotnet tool install -g dotnet-coverage
-        dotnet tool install -g dotnet-reportgenerator-globaltool
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        command: dotnet tool install -g dotnet-coverage
 
     - name: Run tests for ${{ matrix.display-name }}
+      timeout-minutes: 10
       run: |
         echo "Starting test execution for ${{ matrix.display-name }}"
         
@@ -142,18 +146,13 @@ jobs:
         dotnet-coverage collect \
           --output ./test-results/coverage-${{ matrix.test-framework }}.cobertura.xml \
           --output-format cobertura \
-          "dotnet test tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj \
+          "dotnet test \
             --configuration Release \
             --framework ${{ matrix.test-framework }} \
             --verbosity minimal \
             --logger trx;LogFileName=./test-results/test-results.trx \
-            --no-build"
-        
-        echo "=== Test execution completed, checking generated files ==="
-        find ./test-results -type f | sort
-        echo ""
-        echo "=== Looking for coverage files specifically ==="
-        find ./test-results -name "*coverage*" -type f || echo "No coverage files found"
+            --no-build \
+            --parallel"
 
     - name: Publish test results
       uses: dorny/test-reporter@v1
@@ -169,7 +168,9 @@ jobs:
       if: always()
       with:
         name: test-results-${{ matrix.test-framework }}
-        path: ./test-results/  # Overall status check for PR requirements
+        path: ./test-results/
+
+  # Overall status check for PR requirements
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
@@ -198,6 +199,7 @@ jobs:
   codacy-coverage:
     name: Upload Coverage to Codacy
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: test
     if: github.event_name == 'workflow_call' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     
@@ -233,4 +235,4 @@ jobs:
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: './test-results/**/coverage.cobertura.xml'
+          coverage-reports: './test-results/coverage-*.cobertura.xml'
