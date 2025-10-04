@@ -364,6 +364,12 @@ jobs:
           
           echo "Final structure (what Codacy will find):"
           find test-results -name "coverage.cobertura.xml" -type f | sort
+          
+          echo "File details:"
+          find test-results -name "coverage.cobertura.xml" -type f -exec ls -la {} \;
+          
+          echo "File contents preview (first few lines):"
+          find test-results -name "coverage.cobertura.xml" -type f -exec head -3 {} \;
       
       - name: Upload coverage to Codacy
         if: env.CODACY_PROJECT_TOKEN != ''
