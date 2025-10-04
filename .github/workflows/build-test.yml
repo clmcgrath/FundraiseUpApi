@@ -239,8 +239,24 @@ jobs:
           echo "=== Directory sizes ==="
           du -sh ./test-results/* 2>/dev/null || echo "No subdirectories"
       
+      - name: Check secret availability
+        run: |
+          if [ -z "$CODACY_PROJECT_TOKEN" ]; then
+            echo "❌ CODACY_PROJECT_TOKEN secret is not available"
+            echo "Event: ${{ github.event_name }}"
+            echo "Is fork: ${{ github.event.pull_request.head.repo.fork }}"
+            echo "Repository: ${{ github.repository }}"
+          else
+            echo "✅ CODACY_PROJECT_TOKEN secret is available"
+          fi
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      
       - name: Upload coverage to Codacy
+        if: env.CODACY_PROJECT_TOKEN != ''
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: './test-results/coverage-*.cobertura.xml'
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
