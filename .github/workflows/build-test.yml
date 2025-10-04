@@ -322,16 +322,24 @@ jobs:
           for file in "test-results/coverage-net6.0.cobertura.xml" "test-results/coverage-net8.0.cobertura.xml"; do
             if [ -f "$file" ]; then
               echo "✅ Found: $file (size: $(wc -c < "$file") bytes)"
+              # Also create a generic copy for fallback
+              framework=$(echo "$file" | sed 's/.*coverage-\(.*\)\.cobertura\.xml/\1/')
+              mkdir -p "test-results/$framework"
+              cp "$file" "test-results/$framework/coverage.cobertura.xml"
+              echo "Created fallback: test-results/$framework/coverage.cobertura.xml"
             else
               echo "❌ Missing: $file"
             fi
           done
+          
+          echo "Final directory structure:"
+          find test-results -type f 2>/dev/null || echo "No files in test-results"
       
       - name: Upload coverage to Codacy
         if: env.CODACY_PROJECT_TOKEN != ''
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: 'test-results/coverage-net6.0.cobertura.xml,test-results/coverage-net8.0.cobertura.xml'
+          coverage-reports: 'test-results/coverage-*.cobertura.xml,test-results/**/coverage.cobertura.xml'
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
