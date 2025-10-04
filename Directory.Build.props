@@ -1,0 +1,32 @@
+<Project>
+  
+  <PropertyGroup>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Company>FundraiseUpApi Team</Company>
+    <Product>FundraiseUp API .NET Client Library</Product>
+    <Copyright>Copyright © 2025 FundraiseUpApi Team</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+
+
+</Project>

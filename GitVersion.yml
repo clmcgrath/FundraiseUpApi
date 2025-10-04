@@ -1,0 +1,66 @@
+mode: ContinuousDelivery
+next-version: 1.1.1
+
+major-version-bump-message: '\+semver:\s?(breaking|major)|(BREAKING CHANGE)'
+minor-version-bump-message: '\+semver:\s?(feature|minor)|^(feat|add|new):'
+patch-version-bump-message: '\+semver:\s?(fix|patch)|^(fix|bug):'
+no-bump-message: '\+semver:\s?(none|skip)|^(docs|ci|test|chore|refactor):'
+commit-message-incrementing: Enabled
+
+ignore:
+  paths:
+    - ^docs/.*
+    - ^\.github/.*
+    - ^tests?/.*
+    - ^README\.md$
+    - ^CHANGELOG\.md$
+    - ^LICENSE$
+    - ^\.editorconfig$
+    - ^\.gitignore$
+    - .*\.md$
+
+branches:
+  master:
+    label: ''
+    increment: Patch
+    regex: ^master$
+    is-release-branch: true
+    
+  stable:
+    label: rc
+    increment: Patch
+
+    regex: ^stable$
+    is-release-branch: true
+    source-branches: ['master']
+    
+  dev:
+    label: beta
+    increment: Minor
+    regex: ^dev$|^develop$
+    source-branches: ['master']
+    
+  feature:
+    label: alpha
+    increment: Minor
+    regex: ^feature[/-].*
+    source-branches: ['dev', 'master']
+    
+  hotfix:
+    label: hotfix
+    increment: Patch
+    regex: ^hotfix[/-].*
+    source-branches: ['master']
+    
+  support:
+    label: support
+    increment: None
+    regex: ^support[/-].*
+    source-branches: ['master']
+    
+  release:
+    label: rc
+    increment: None
+    regex: ^release[/-].*
+    source-branches: ['dev']
+    is-release-branch: true

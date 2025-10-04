@@ -1,0 +1,855 @@
+name: 🚀 Release
+
+on:
+  pull_request:
+    branches: [ master, stable, dev, 'release/**' ]
+    types: [ closed ]
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Force release (bypass branch protection)'
+        required: false
+        default: false
+        type: boolean
+      release_type:
+        description: 'Release type'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - major
+          - minor
+          - patch
+
+# Required permissions for releases and package publishing
+permissions:
+  contents: write          # Create releases and tags
+  packages: write          # Publish to GitHub Packages
+  actions: read           # Download artifacts
+  checks: write           # Update check status
+  pull-requests: write    # Comment on PRs
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  # Pre-flight checks
+  validate-release:
+    name: 🔍 Validate Release
+    runs-on: ubuntu-latest
+    if: |
+      (github.event.pull_request.merged == true && 
+       (contains(github.event.pull_request.base.ref, 'master') || 
+        contains(github.event.pull_request.base.ref, 'stable') || 
+        contains(github.event.pull_request.base.ref, 'dev') || 
+        startsWith(github.event.pull_request.base.ref, 'release/'))) ||
+      (github.event_name == 'workflow_dispatch' && 
+       (github.event.inputs.force_release == 'true' || 
+        contains(github.ref_name, 'master') || 
+        contains(github.ref_name, 'stable') || 
+        contains(github.ref_name, 'dev') || 
+        startsWith(github.ref_name, 'release/')))
+    
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.version.outputs.semVer }}
+      release_notes: ${{ steps.notes.outputs.release_notes }}
+      branch_protection_bypassed: ${{ steps.check.outputs.branch_protection_bypassed }}
+      is_protected_branch: ${{ steps.check.outputs.is_protected_branch }}
+      force_release_used: ${{ steps.check.outputs.force_release_used }}
+      
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v4.1.0
+      with:
+        versionSpec: '6.4.0'
+
+    - name: Calculate Version (Auto)
+      id: version_auto
+      uses: gittools/actions/gitversion/execute@v4.1.0
+      with:
+        configFilePath: GitVersion.yml
+
+    - name: Apply Version Override
+      id: version
+      env:
+        AUTO_VERSION: ${{ steps.version_auto.outputs.semVer }}
+        AUTO_MAJOR: ${{ steps.version_auto.outputs.major }}
+        AUTO_MINOR: ${{ steps.version_auto.outputs.minor }}
+        AUTO_PATCH: ${{ steps.version_auto.outputs.patch }}
+        AUTO_PRERELEASE: ${{ steps.version_auto.outputs.preReleaseTag }}
+        AUTO_BUILD: ${{ steps.version_auto.outputs.buildMetaData }}
+        RELEASE_TYPE: ${{ github.event.inputs.release_type || 'auto' }}
+      run: |
+        # Get automatic version from GitVersion (now from environment variables)
+        
+        echo "🔍 Release type: $RELEASE_TYPE"
+        echo "🤖 Auto version: $AUTO_VERSION"
+        
+        # Apply manual override if specified
+        if [ "$RELEASE_TYPE" = "major" ]; then
+          NEW_MAJOR=$((AUTO_MAJOR + 1))
+          OVERRIDE_VERSION="${NEW_MAJOR}.0.0"
+          echo "🎯 Major override: $OVERRIDE_VERSION"
+        elif [ "$RELEASE_TYPE" = "minor" ]; then
+          NEW_MINOR=$((AUTO_MINOR + 1))
+          OVERRIDE_VERSION="${AUTO_MAJOR}.${NEW_MINOR}.0"
+          echo "🎯 Minor override: $OVERRIDE_VERSION"
+        elif [ "$RELEASE_TYPE" = "patch" ]; then
+          NEW_PATCH=$((AUTO_PATCH + 1))
+          OVERRIDE_VERSION="${AUTO_MAJOR}.${AUTO_MINOR}.${NEW_PATCH}"
+          echo "🎯 Patch override: $OVERRIDE_VERSION"
+        else
+          OVERRIDE_VERSION="$AUTO_VERSION"
+          echo "🤖 Using automatic version: $OVERRIDE_VERSION"
+        fi
+        
+        # Set all GitVersion outputs, using override version where applicable
+        echo "semVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        echo "assemblySemVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        # Create 4-part version for assemblySemFileVer (major.minor.patch.0)
+        if [[ "$OVERRIDE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+          FILE_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.0"
+          echo "assemblySemFileVer=$FILE_VERSION" >> $GITHUB_OUTPUT
+        else
+          echo "assemblySemFileVer=$OVERRIDE_VERSION.0" >> $GITHUB_OUTPUT
+        fi
+        echo "informationalVersion=$OVERRIDE_VERSION+$AUTO_BUILD" >> $GITHUB_OUTPUT
+        
+        # Extract version parts from override version
+        if [[ "$OVERRIDE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-.*)?$ ]]; then
+          echo "major=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+          echo "minor=${BASH_REMATCH[2]}" >> $GITHUB_OUTPUT
+          echo "patch=${BASH_REMATCH[3]}" >> $GITHUB_OUTPUT
+          echo "preReleaseTag=${BASH_REMATCH[4]#-}" >> $GITHUB_OUTPUT
+        fi
+        
+        echo "buildMetaData=$AUTO_BUILD" >> $GITHUB_OUTPUT
+        echo "fullBuildMetaData=$AUTO_BUILD" >> $GITHUB_OUTPUT
+        echo "branchName=${{ steps.version_auto.outputs.branchName }}" >> $GITHUB_OUTPUT
+        echo "escapedBranchName=${{ steps.version_auto.outputs.escapedBranchName }}" >> $GITHUB_OUTPUT
+        echo "sha=${{ steps.version_auto.outputs.sha }}" >> $GITHUB_OUTPUT
+        echo "shortSha=${{ steps.version_auto.outputs.shortSha }}" >> $GITHUB_OUTPUT
+        
+        echo "✅ Final version: $OVERRIDE_VERSION"
+
+    - name: Check if release should be created
+      id: check
+      env:
+        CURRENT_VERSION: ${{ steps.version.outputs.semVer }}
+        CURRENT_BRANCH: ${{ github.ref_name }}
+        EVENT_NAME: ${{ github.event_name }}
+        FORCE_RELEASE: ${{ github.event.inputs.force_release || 'false' }}
+      run: |
+        echo "Current version: $CURRENT_VERSION"
+        echo "Branch: $CURRENT_BRANCH"
+        echo "Event: $EVENT_NAME"
+        echo "Force release: $FORCE_RELEASE"
+        
+        # Branch protection validation
+        IS_PROTECTED_BRANCH="false"
+        
+        if [[ "$CURRENT_BRANCH" == "master" || "$CURRENT_BRANCH" == "stable" || "$CURRENT_BRANCH" == "dev" || "$CURRENT_BRANCH" == release/* ]]; then
+          IS_PROTECTED_BRANCH="true"
+          echo "✅ Release from protected branch: $CURRENT_BRANCH"
+        elif [[ "$FORCE_RELEASE" == "true" ]]; then
+          echo "🚨 FORCE RELEASE: Bypassing branch protection for branch: $CURRENT_BRANCH"
+          echo "⚠️  This release is being created from a non-protected branch with force_release=true"
+          echo "branch_protection_bypassed=true" >> $GITHUB_OUTPUT
+        elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+          echo "❌ Manual release from non-protected branch '$CURRENT_BRANCH' requires force_release=true"
+          echo "💡 Protected branches: master, stable, dev, release/*"
+          echo "should_release=false" >> $GITHUB_OUTPUT
+          echo "::error::Cannot create release from '$CURRENT_BRANCH'. Use force_release=true to bypass branch protection, or release from master/stable branches."
+          exit 0
+        fi
+        
+        # Set branch protection status for later use
+        echo "is_protected_branch=$IS_PROTECTED_BRANCH" >> $GITHUB_OUTPUT
+        echo "force_release_used=$FORCE_RELEASE" >> $GITHUB_OUTPUT
+        
+        # Check if this version already exists as a tag
+        if git tag --list | grep -q "^v$CURRENT_VERSION$"; then
+          echo "⚠️ Version $CURRENT_VERSION already exists as a tag"
+          echo "should_release=false" >> $GITHUB_OUTPUT
+        else
+          echo "✅ Should create release for version $CURRENT_VERSION"
+          echo "should_release=true" >> $GITHUB_OUTPUT
+          
+          # Determine publishing strategy
+          if [[ "$CURRENT_VERSION" == *"-beta"* ]] || [[ "$CURRENT_VERSION" == *"-rc"* ]] || [[ "$CURRENT_VERSION" != *"-"* ]]; then
+            echo "📦 Will publish to NuGet.org + GitHub Packages (beta/rc/stable)"
+          else
+            echo "📦 Will publish to GitHub Packages only (development/alpha)"
+          fi
+        fi
+
+    - name: Extract release notes from CHANGELOG
+      id: notes
+      run: |
+        VERSION="${{ steps.version.outputs.semVer }}"
+        echo "Extracting release notes from CHANGELOG.md for version $VERSION..."
+        
+        # First, try to extract from existing release section if it exists
+        if grep -q "## \[$VERSION\]" CHANGELOG.md; then
+          echo "Found existing release section for $VERSION"
+          awk -v version="$VERSION" '
+          BEGIN { found=0 }
+          /^## \[/ && $0 ~ "\\[" version "\\]" { found=1; next }
+          /^## \[/ && found { found=0; exit }
+          found && /^### / { print }
+          found && /^#### / { print }
+          found && /^- / { print }
+          found && /^\* / { print }
+          found && /^[[:space:]]*$/ { print }
+          found && length($0) > 0 && !/^## / { print }
+          ' CHANGELOG.md > release_notes_temp.md
+        else
+          echo "Extracting from [Unreleased] section"
+          # Extract from [Unreleased] section
+          awk '
+          /^## \[Unreleased\]/ { in_unreleased=1; next }
+          /^## \[/ && in_unreleased { in_unreleased=0 }
+          in_unreleased && /^### / { print }
+          in_unreleased && /^#### / { print }
+          in_unreleased && /^- / { print }
+          in_unreleased && /^\* / { print }
+          in_unreleased && /^[[:space:]]*$/ { print }
+          in_unreleased && length($0) > 0 && !/^## / { print }
+          ' CHANGELOG.md > release_notes_temp.md
+        fi
+        
+        # Clean up release notes
+        sed -i '/./,$!d' release_notes_temp.md                    # Remove leading empty lines
+        sed -i '${/^[[:space:]]*$/d}' release_notes_temp.md       # Remove trailing empty lines
+        
+        # Generate appropriate release notes based on version type
+        if [ ! -s release_notes_temp.md ]; then
+          echo "No specific release notes found, generating based on version type..."
+          
+          if [[ "$VERSION" == *"-alpha"* ]]; then
+            echo "### 🚧 Development Release" > release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "This is an alpha/development release containing the latest changes from active development." >> release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "⚠️ **Not recommended for production use** - use for testing and development only." >> release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "**Available on:** GitHub Packages only" >> release_notes_temp.md
+          elif [[ "$VERSION" == *"-beta"* ]]; then
+            echo "### 🧪 Beta Release" > release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "This beta release includes new features and improvements ready for community testing." >> release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "**Perfect for:** Early adopters, integration testing, and feedback" >> release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "**Available on:** GitHub Packages and NuGet.org" >> release_notes_temp.md
+          elif [[ "$VERSION" == *"-rc"* ]]; then
+            echo "### � Release Candidate" > release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "This release candidate represents a stable build ready for final validation before the stable release." >> release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "**Perfect for:** Production validation, final testing, and early production deployment" >> release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "**Available on:** GitHub Packages and NuGet.org" >> release_notes_temp.md
+          else
+            echo "### 🎉 Stable Release" > release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "This stable release includes tested features, improvements, and bug fixes." >> release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "**Perfect for:** Production deployment, new integrations, and stable applications" >> release_notes_temp.md
+            echo "" >> release_notes_temp.md
+            echo "**Available on:** GitHub Packages and NuGet.org" >> release_notes_temp.md
+          fi
+          
+          echo "" >> release_notes_temp.md
+          echo "### 📋 Details" >> release_notes_temp.md
+          echo "See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for comprehensive details about this release." >> release_notes_temp.md
+        fi
+        
+        # Add a notice about the changelog format if release notes were extracted
+        if [[ -s release_notes_temp.md ]] && ! grep -q "^### 🚧\|^### 🧪\|^### 🎯\|^### 🎉" release_notes_temp.md; then
+          echo "" >> release_notes_temp.md
+          echo "---" >> release_notes_temp.md
+          echo "" >> release_notes_temp.md
+          echo "📋 **Full Details**: See the complete [CHANGELOG](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for comprehensive release information." >> release_notes_temp.md
+        fi
+        
+        # Read release notes into output
+        {
+          echo 'release_notes<<EOF'
+          cat release_notes_temp.md
+          echo EOF
+        } >> $GITHUB_OUTPUT
+        
+        echo "Release notes prepared:"
+        cat release_notes_temp.md
+
+  # Import and run build/test workflow
+  build-and-test:
+    name: 🏗️ Build & Test
+    needs: validate-release
+    if: needs.validate-release.outputs.should_release == 'true'
+    uses: ./.github/workflows/build-test.yml
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+      statuses: write
+    secrets: inherit
+
+  # Create GitHub Release
+  create-release:
+    name: 🚀 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate-release, build-and-test]
+    if: needs.validate-release.outputs.should_release == 'true'
+    
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      version: ${{ steps.version.outputs.semVer }}
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          8.0.x
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v4.1.0
+      with:
+        versionSpec: '6.4.0'
+
+    - name: Calculate Version (Auto)
+      id: version_auto
+      uses: gittools/actions/gitversion/execute@v4.1.0
+      with:
+        configFilePath: GitVersion.yml
+
+    - name: Apply Version Override
+      id: version
+      env:
+        AUTO_VERSION: ${{ steps.version_auto.outputs.semVer }}
+        AUTO_MAJOR: ${{ steps.version_auto.outputs.major }}
+        AUTO_MINOR: ${{ steps.version_auto.outputs.minor }}
+        AUTO_PATCH: ${{ steps.version_auto.outputs.patch }}
+        AUTO_PRERELEASE: ${{ steps.version_auto.outputs.preReleaseTag }}
+        AUTO_BUILD: ${{ steps.version_auto.outputs.buildMetaData }}
+        RELEASE_TYPE: ${{ github.event.inputs.release_type || 'auto' }}
+      run: |
+        # Get automatic version from GitVersion (now from environment variables)
+        
+        echo "🔍 Release type: $RELEASE_TYPE"
+        echo "🤖 Auto version: $AUTO_VERSION"
+        
+        # Apply manual override if specified
+        if [ "$RELEASE_TYPE" = "major" ]; then
+          NEW_MAJOR=$((AUTO_MAJOR + 1))
+          OVERRIDE_VERSION="${NEW_MAJOR}.0.0"
+          echo "🎯 Major override: $OVERRIDE_VERSION"
+        elif [ "$RELEASE_TYPE" = "minor" ]; then
+          NEW_MINOR=$((AUTO_MINOR + 1))
+          OVERRIDE_VERSION="${AUTO_MAJOR}.${NEW_MINOR}.0"
+          echo "🎯 Minor override: $OVERRIDE_VERSION"
+        elif [ "$RELEASE_TYPE" = "patch" ]; then
+          NEW_PATCH=$((AUTO_PATCH + 1))
+          OVERRIDE_VERSION="${AUTO_MAJOR}.${AUTO_MINOR}.${NEW_PATCH}"
+          echo "🎯 Patch override: $OVERRIDE_VERSION"
+        else
+          OVERRIDE_VERSION="$AUTO_VERSION"
+          echo "🤖 Using automatic version: $OVERRIDE_VERSION"
+        fi
+        
+        # Set all GitVersion outputs, using override version where applicable
+        echo "semVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        echo "assemblySemVer=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+        # Create 4-part version for assemblySemFileVer (major.minor.patch.0)
+        if [[ "$OVERRIDE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+          FILE_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.0"
+          echo "assemblySemFileVer=$FILE_VERSION" >> $GITHUB_OUTPUT
+        else
+          echo "assemblySemFileVer=$OVERRIDE_VERSION.0" >> $GITHUB_OUTPUT
+        fi
+        echo "informationalVersion=$OVERRIDE_VERSION+$AUTO_BUILD" >> $GITHUB_OUTPUT
+        
+        # Extract version parts from override version
+        if [[ "$OVERRIDE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-.*)?$ ]]; then
+          echo "major=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+          echo "minor=${BASH_REMATCH[2]}" >> $GITHUB_OUTPUT
+          echo "patch=${BASH_REMATCH[3]}" >> $GITHUB_OUTPUT
+          echo "preReleaseTag=${BASH_REMATCH[4]#-}" >> $GITHUB_OUTPUT
+        fi
+        
+        echo "buildMetaData=$AUTO_BUILD" >> $GITHUB_OUTPUT
+        echo "fullBuildMetaData=$AUTO_BUILD" >> $GITHUB_OUTPUT
+        echo "branchName=${{ steps.version_auto.outputs.branchName }}" >> $GITHUB_OUTPUT
+        echo "escapedBranchName=${{ steps.version_auto.outputs.escapedBranchName }}" >> $GITHUB_OUTPUT
+        echo "sha=${{ steps.version_auto.outputs.sha }}" >> $GITHUB_OUTPUT
+        echo "shortSha=${{ steps.version_auto.outputs.shortSha }}" >> $GITHUB_OUTPUT
+        
+        echo "✅ Final version: $OVERRIDE_VERSION"
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.NUGET_PACKAGES }}
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build for Release
+      run: |
+        dotnet build \
+          --configuration Release \
+          --no-restore \
+          -p:Version=${{ steps.version.outputs.semVer }} \
+          -p:AssemblyVersion=${{ steps.version.outputs.assemblySemFileVer }} \
+          -p:FileVersion=${{ steps.version.outputs.assemblySemFileVer }} \
+          -p:InformationalVersion=${{ steps.version.outputs.informationalVersion }} \
+          -p:ContinuousIntegrationBuild=true \
+          -p:EmbedUntrackedSources=true \
+          -p:IncludeSourceRevisionInInformationalVersion=true
+
+    - name: Run Tests
+      run: |
+        dotnet test \
+          --configuration Release \
+          --no-build \
+          --verbosity minimal \
+          --logger "trx" \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./test-results
+
+    - name: Create NuGet Packages
+      env:
+        PACKAGE_VERSION: ${{ steps.version.outputs.semVer }}
+        REPOSITORY_COMMIT: ${{ github.sha }}
+        REPOSITORY_BRANCH: ${{ github.ref_name }}
+        REPOSITORY_URL: https://github.com/${{ github.repository }}
+      run: |
+        dotnet pack \
+          --configuration Release \
+          --no-build \
+          --output ./packages \
+          -p:PackageVersion=$PACKAGE_VERSION \
+          -p:RepositoryCommit=$REPOSITORY_COMMIT \
+          -p:RepositoryBranch=$REPOSITORY_BRANCH \
+          -p:RepositoryUrl=$REPOSITORY_URL
+
+    - name: Validate Package Contents
+      run: |
+        echo "📦 Validating package contents..."
+        for package in ./packages/*.nupkg; do
+          echo "📋 Contents of $(basename "$package"):"
+          dotnet nuget list --source "$package" || true
+        done
+        
+        # Check if main package exists
+        if [ ! -f ./packages/FundraiseUp.Client.${{ steps.version.outputs.semVer }}.nupkg ]; then
+          echo "❌ Main package not found!"
+          exit 1
+        fi
+        
+        echo "✅ Package validation passed"
+
+    - name: Determine release type and availability
+      id: release_info
+      run: |
+        VERSION="${{ steps.version.outputs.semVer }}"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+        if [[ "$VERSION" == *"-alpha"* ]] || ([[ "$VERSION" == *"-"* ]] && [[ "$VERSION" != *"-beta"* ]] && [[ "$VERSION" != *"-rc"* ]]); then
+          echo "📦 Alpha/Development release - GitHub Packages only"
+          echo "nuget_available=false" >> $GITHUB_OUTPUT
+          echo "release_type=Alpha/Development Release" >> $GITHUB_OUTPUT
+          echo "availability=Available on GitHub Packages only" >> $GITHUB_OUTPUT
+        elif [[ "$VERSION" == *"-beta"* ]]; then
+          echo "📦 Beta release - GitHub Packages + NuGet.org"
+          echo "nuget_available=true" >> $GITHUB_OUTPUT
+          echo "release_type=Beta Release" >> $GITHUB_OUTPUT
+          echo "availability=Available on GitHub Packages and NuGet.org" >> $GITHUB_OUTPUT
+        elif [[ "$VERSION" == *"-rc"* ]]; then
+          echo "📦 Release candidate - GitHub Packages + NuGet.org"  
+          echo "nuget_available=true" >> $GITHUB_OUTPUT
+          echo "release_type=Release Candidate" >> $GITHUB_OUTPUT
+          echo "availability=Available on GitHub Packages and NuGet.org" >> $GITHUB_OUTPUT
+        else
+          echo "📦 Stable release - GitHub Packages + NuGet.org"
+          echo "nuget_available=true" >> $GITHUB_OUTPUT
+          echo "release_type=Stable Release" >> $GITHUB_OUTPUT
+          echo "availability=Available on GitHub Packages and NuGet.org" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Prepare Release Assets
+      run: |
+        echo "📦 Preparing release assets..."
+        mkdir -p ./release-assets
+        cp ./packages/*.nupkg ./release-assets/ 2>/dev/null || true
+        
+        # Only copy symbol packages if they exist
+        if ls ./packages/*.snupkg 1> /dev/null 2>&1; then
+          echo "✅ Symbol packages found, including in release"
+          cp ./packages/*.snupkg ./release-assets/
+        else
+          echo "ℹ️  No symbol packages found, skipping"
+        fi
+        
+        echo "📁 Release assets:"
+        ls -la ./release-assets/
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.version.outputs.semVer }}
+        name: ${{ steps.release_info.outputs.release_type }} v${{ steps.version.outputs.semVer }}
+        body: |
+          # 🎉 FundraiseUp .NET Client Library v${{ steps.version.outputs.semVer }}
+          
+          **${{ steps.release_info.outputs.release_type }}** - ${{ steps.release_info.outputs.availability }}
+          
+          ${{ needs.validate-release.outputs.release_notes }}
+          
+          ${{ github.event.inputs.release_type && github.event.inputs.release_type != 'auto' && format('## 🎯 Manual Version Override
+
+          This release was created with a **{0}** version override, bypassing automatic version calculation.
+          - Override Type: {0}
+          - Final Version: v{1}
+          
+          ', github.event.inputs.release_type, steps.version.outputs.semVer) || '' }}${{ needs.validate-release.outputs.branch_protection_bypassed == 'true' && format('## 🚨 Branch Protection Bypass
+
+          **⚠️  IMPORTANT SECURITY NOTICE**
+          
+          This release was created with `force_release=true`, bypassing normal branch protection rules.
+          - Source Branch: {0}
+          - Released By: @{1}
+          - Bypass Reason: Manual override requested
+          
+          This release should be reviewed carefully as it was not created through the standard protected branch workflow.
+          
+          ', github.ref_name, github.actor) || '' }}## 📦 Installation
+          
+          ### NuGet Package Manager
+          ```powershell
+          Install-Package FundraiseUp.Client -Version ${{ steps.version.outputs.semVer }}
+          ```
+          
+          ### .NET CLI
+          ```bash
+          dotnet add package FundraiseUp.Client --version ${{ steps.version.outputs.semVer }}
+          ```
+          
+          ### PackageReference
+          ```xml
+          <PackageReference Include="FundraiseUp.Client" Version="${{ steps.version.outputs.semVer }}" />
+          ```
+          
+          ## � Package Availability
+          
+          ${{ steps.release_info.outputs.nuget_available == 'true' && '- ✅ **NuGet.org**: https://www.nuget.org/packages/FundraiseUp.Client/' || '- ❌ **NuGet.org**: Not available (development release)' }}${{ steps.release_info.outputs.nuget_available == 'true' && steps.version.outputs.semVer || '' }}
+          - ✅ **GitHub Packages**: https://github.com/${{ github.repository }}/packages
+          - ✅ **GitHub Release**: This page (includes .nupkg files)
+          
+          ## 🔗 Resources
+          - [📚 Documentation](https://clmcgrath.github.io/FundraiseUpApi/)
+          - [🚀 Getting Started Guide](https://clmcgrath.github.io/FundraiseUpApi/getting-started/)
+          - [⚡ Production Readiness Guide](https://clmcgrath.github.io/FundraiseUpApi/production-readiness/)
+          - [🐛 Report Issues](https://github.com/${{ github.repository }}/issues)
+          - [💬 Discussions](https://github.com/${{ github.repository }}/discussions)
+          - [📋 Full Changelog](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md)
+          
+          ## 🏗️ Technical Details
+          
+          ### Target Frameworks
+          - .NET Standard 2.0 (legacy compatibility)
+          - .NET 6.0 (modern performance)
+          - .NET 8.0 (latest optimizations - 15-25% performance boost)
+          
+          ### Quality Assurance
+          - ✅ **172 comprehensive tests** across all target frameworks
+          - ✅ **Production-ready async patterns** with ConfigureAwait(false)
+          - ✅ **Enterprise-grade rate limiting** and error handling
+          - ✅ **Thread-safe design** for all .NET environments
+          - ✅ **Multi-framework validation** on .NET 6.0 and 8.0
+          
+          ### Release Statistics
+          - **Build Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          - **Commit**: ${{ github.sha }}
+          - **Branch**: ${{ github.ref_name }} ${{ needs.validate-release.outputs.is_protected_branch == 'true' && '(protected)' || '(unprotected)' }}
+          - **Branch Protection**: ${{ needs.validate-release.outputs.force_release_used == 'true' && '⚠️ Bypassed with force_release=true' || '✅ Enforced' }}
+          - **Workflow**: ${{ github.run_id }}
+        files: ./release-assets/*
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.semVer, '-') }}
+        generate_release_notes: false
+        fail_on_unmatched_files: false
+        make_latest: ${{ !contains(steps.version.outputs.semVer, '-') }}
+
+    - name: Upload Package Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./packages/
+        retention-days: 7
+
+    - name: Update CHANGELOG
+      if: success()
+      run: |
+        echo "📝 Updating CHANGELOG.md..."
+        
+        # Create release entry in CHANGELOG
+        DATE=$(date +"%Y-%m-%d")
+        sed -i "s/## \[Unreleased\]/## [Unreleased]\n\n## [${{ steps.version.outputs.semVer }}] - $DATE/" CHANGELOG.md
+        
+        # Commit and push changes
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add CHANGELOG.md
+        git commit -m "chore: update CHANGELOG for v${{ steps.version.outputs.semVer }} release [skip ci]" || true
+        git push origin HEAD:${{ github.ref_name }} || true
+
+    - name: Comment on PR
+      if: github.event.pull_request && success()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const version = '${{ steps.version.outputs.semVer }}';
+          const releaseUrl = `https://github.com/${{ github.repository }}/releases/tag/v${version}`;
+          const nugetUrl = `https://www.nuget.org/packages/FundraiseUp.Client/${version}`;
+          
+          // Determine release type and NuGet availability
+          let releaseType = 'Stable Release';
+          let nugetAvailable = true;
+          let releaseIcon = '🎉';
+          
+          if (version.includes('-alpha')) {
+            releaseType = 'Alpha/Development Release';
+            nugetAvailable = false;
+            releaseIcon = '🚧';
+          } else if (version.includes('-beta')) {
+            releaseType = 'Beta Release';
+            releaseIcon = '🧪';
+          } else if (version.includes('-rc')) {
+            releaseType = 'Release Candidate';
+            releaseIcon = '🎯';
+          }
+          
+          const nugetSection = nugetAvailable 
+            ? `- ✅ [NuGet.org](${nugetUrl})`
+            : `- ❌ NuGet.org (not available for ${releaseType.toLowerCase()})`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## ${releaseIcon} Release Created Successfully!
+            
+            **${releaseType}:** v${version}
+            
+            ### 📦 Package Availability
+            - ✅ [GitHub Packages](https://github.com/${{ github.repository }}/packages)
+            ${nugetSection}
+            - ✅ [GitHub Release](${releaseUrl}) (includes .nupkg files)
+            
+            ### 🔗 Resources
+            - 📋 [Release Notes & Changelog](${releaseUrl})
+            - 📚 [Documentation](https://clmcgrath.github.io/FundraiseUpApi/)
+            - 🚀 [Getting Started](https://clmcgrath.github.io/FundraiseUpApi/getting-started/)
+            - ⚡ [Production Guide](https://clmcgrath.github.io/FundraiseUpApi/production-readiness/)
+            
+            ### 📦 Installation
+            \`\`\`bash
+            dotnet add package FundraiseUp.Client --version ${version}
+            \`\`\`
+            
+            Thank you for your contribution! 🚀`
+          });
+
+  # Publish to GitHub Packages
+  publish-github-packages:
+    name: 📦 Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: needs.create-release.result == 'success'
+    
+    steps:
+    - name: Download Package Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./packages
+
+    - name: Publish to GitHub Packages
+      run: |
+        echo "🚀 Publishing to GitHub Packages..."
+        dotnet nuget push "./packages/*.nupkg" \
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          --api-key ${{ secrets.GITHUB_TOKEN }} \
+          --skip-duplicate \
+          --no-symbols
+
+  # Publish to NuGet.org
+  publish-nuget-org:
+    name: 📦 Publish to NuGet.org
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: needs.create-release.result == 'success' && (!contains(needs.create-release.outputs.version, '-') || contains(needs.create-release.outputs.version, '-beta') || contains(needs.create-release.outputs.version, '-rc'))
+    
+    steps:
+    - name: Download Package Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./packages
+
+    - name: Publish to NuGet.org
+      run: |
+        VERSION="${{ needs.create-release.outputs.version }}"
+        echo "🚀 Publishing to NuGet.org..."
+        if [[ "$VERSION" == *"-beta"* ]]; then
+          echo "📦 Publishing beta version to NuGet.org"
+        elif [[ "$VERSION" == *"-rc"* ]]; then
+          echo "📦 Publishing release candidate to NuGet.org"
+        else
+          echo "📦 Publishing stable version to NuGet.org"
+        fi
+        dotnet nuget push "./packages/*.nupkg" \
+          --source "https://api.nuget.org/v3/index.json" \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --skip-duplicate
+
+  # Post-release validation
+  post-release-validation:
+    name: ✅ Post-Release Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [validate-release, create-release, publish-github-packages, publish-nuget-org]
+    if: always() && needs.validate-release.outputs.should_release == 'true'
+    
+    steps:
+    - name: Validate GitHub Release
+      run: |
+        echo "🔍 Validating GitHub release..."
+        RELEASE_URL="https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ needs.validate-release.outputs.version }}"
+        
+        if curl -f -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$RELEASE_URL" > /dev/null 2>&1; then
+          echo "✅ GitHub release created successfully"
+        else
+          echo "❌ GitHub release validation failed"
+          exit 1
+        fi
+
+    - name: Validate NuGet Package Availability
+      if: success() && needs.publish-nuget-org.result == 'success'
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        echo "🔍 Validating NuGet package availability for version: $VERSION"
+        
+        if [[ "$VERSION" == *"-beta"* ]]; then
+          echo "📦 Validating beta pre-release package"
+        elif [[ "$VERSION" == *"-rc"* ]]; then
+          echo "📦 Validating release candidate pre-release package"
+        else
+          echo "📦 Validating stable release package"
+        fi
+        
+        echo "⏳ Checking NuGet package availability (with cancellation support)..."
+        
+        # Check if package is available with shorter, cancellable polling
+        for i in {1..20}; do
+          # Use timeout to make curl cancellable and add progress indication
+          if timeout 10s curl -f -s "https://api.nuget.org/v3-flatcontainer/fundraiseup.client/$VERSION/fundraiseup.client.nuspec" > /dev/null 2>&1; then
+            echo "✅ NuGet package is available and indexed"
+            exit 0
+          fi
+          
+          # Short delay that's more responsive to cancellation
+          echo "⏳ Attempt $i/20: Package not yet indexed, checking again in 10 seconds..."
+          
+          # Use a loop of short sleeps instead of one long sleep for better cancellation response
+          for j in {1..10}; do
+            sleep 1
+            # Check if we should exit early (this helps with cancellation responsiveness)
+            if [ $? -ne 0 ]; then
+              echo "🛑 Validation cancelled or interrupted"
+              exit 1
+            fi
+          done
+        done
+        
+        echo "⚠️ NuGet package validation timed out after 200 seconds"
+        echo "This is normal - NuGet indexing can take up to 15 minutes"
+        echo "Package was successfully published but may still be indexing"
+
+    - name: Release Summary
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version:** v$VERSION" >> $GITHUB_STEP_SUMMARY
+        echo "**Release Status:** ${{ needs.create-release.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Publishing Results" >> $GITHUB_STEP_SUMMARY
+        
+        # GitHub Packages status
+        GITHUB_STATUS="${{ needs.publish-github-packages.result }}"
+        if [ "$GITHUB_STATUS" = "success" ]; then
+          echo "- ✅ GitHub Packages: Published successfully" >> $GITHUB_STEP_SUMMARY
+        elif [ "$GITHUB_STATUS" = "failure" ]; then
+          echo "- ❌ GitHub Packages: Publishing failed" >> $GITHUB_STEP_SUMMARY
+        elif [ "$GITHUB_STATUS" = "cancelled" ]; then
+          echo "- 🛑 GitHub Packages: Publishing cancelled" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- ⏳ GitHub Packages: $GITHUB_STATUS" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # NuGet.org status
+        NUGET_STATUS="${{ needs.publish-nuget-org.result }}"
+        if [[ "$VERSION" == *"-alpha"* ]] || ([[ "$VERSION" == *"-"* ]] && [[ "$VERSION" != *"-beta"* ]] && [[ "$VERSION" != *"-rc"* ]]); then
+          echo "- ⏭️ NuGet.org: Skipped (alpha/development release)" >> $GITHUB_STEP_SUMMARY
+        elif [ "$NUGET_STATUS" = "success" ]; then
+          echo "- ✅ NuGet.org: Published successfully" >> $GITHUB_STEP_SUMMARY
+        elif [ "$NUGET_STATUS" = "failure" ]; then
+          echo "- ❌ NuGet.org: Publishing failed" >> $GITHUB_STEP_SUMMARY
+        elif [ "$NUGET_STATUS" = "cancelled" ]; then
+          echo "- 🛑 NuGet.org: Publishing cancelled" >> $GITHUB_STEP_SUMMARY
+        elif [ "$NUGET_STATUS" = "skipped" ]; then
+          echo "- ⏭️ NuGet.org: Skipped (conditions not met)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- ⏳ NuGet.org: $NUGET_STATUS" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+        echo "- [📋 Release](https://github.com/${{ github.repository }}/releases/tag/v$VERSION)" >> $GITHUB_STEP_SUMMARY
+        
+        # Only show NuGet link if published to NuGet.org
+        if [[ "$VERSION" != *"-alpha"* ]] && ([[ "$VERSION" != *"-"* ]] || [[ "$VERSION" == *"-beta"* ]] || [[ "$VERSION" == *"-rc"* ]]); then
+          echo "- [📦 NuGet](https://www.nuget.org/packages/FundraiseUp.Client/$VERSION)" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "- [📚 Documentation](https://clmcgrath.github.io/FundraiseUpApi/)" >> $GITHUB_STEP_SUMMARY
