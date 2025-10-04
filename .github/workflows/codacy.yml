@@ -50,8 +50,22 @@ jobs:
           name: test-results-${{ matrix.test-framework }}
           path: ./test-results/
       
+      - name: Debug downloaded files
+        run: |
+          echo "=== Downloaded files debug ==="
+          echo "Looking for files in test-results directory:"
+          find ./test-results -type f | sort
+          echo ""
+          echo "Expected file: ./test-results/coverage.${{ matrix.test-framework }}.cobertura.xml"
+          if [ -f "./test-results/coverage.${{ matrix.test-framework }}.cobertura.xml" ]; then
+            echo "✅ Coverage file found"
+            ls -la "./test-results/coverage.${{ matrix.test-framework }}.cobertura.xml"
+          else
+            echo "❌ Coverage file not found"
+          fi
+      
       - name: Upload coverage to Codacy
         uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: './test-results/**/coverage.cobertura.xml'
+          coverage-reports: './test-results/coverage.${{ matrix.test-framework }}.cobertura.xml'
