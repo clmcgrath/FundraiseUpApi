@@ -152,7 +152,7 @@ jobs:
         echo "=== Installed Packages ==="
         dotnet list tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj package | grep -i cover || echo "No coverage packages found"
         
-        # Try coverlet.msbuild approach with explicit paths
+        # Try coverlet.msbuild approach - simplified exclusions
         echo "=== Attempting coverage with coverlet.msbuild ==="
         dotnet test tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj \
           --configuration Release \
@@ -165,8 +165,7 @@ jobs:
           /p:CoverletOutputFormat=cobertura \
           /p:CoverletOutput=./test-results/ \
           /p:CoverletOutputName=coverage-${{ matrix.test-framework }}.cobertura \
-          '/p:Exclude=[*.Tests]*' \
-          '/p:ExcludeByFile=**/bin/**;**/obj/**'
+          /p:Exclude=[*.Tests]*
           
         echo "Generated files:"
         ls -la ./test-results/
