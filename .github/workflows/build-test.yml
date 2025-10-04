@@ -269,6 +269,9 @@ jobs:
           du -sh ./test-results/* 2>/dev/null || echo "No subdirectories"
       
       - name: Check secret availability
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          DIRECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
         run: |
           echo "=== Debugging Secret Access ==="
           echo "Event: ${{ github.event_name }}"
@@ -286,7 +289,7 @@ jobs:
           if [ -z "$CODACY_PROJECT_TOKEN" ]; then
             echo "❌ CODACY_PROJECT_TOKEN secret is not available in environment"
           else
-            echo "✅ CODACY_PROJECT_TOKEN secret is available in environment"
+            echo "✅ CODACY_PROJECT_TOKEN secret is available in environment (length: ${#CODACY_PROJECT_TOKEN})"
           fi
           
           # Try direct access
@@ -295,9 +298,6 @@ jobs:
           else
             echo "✅ Direct secret access works (length: ${#DIRECT_TOKEN})"
           fi
-        env:
-          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          DIRECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       
       - name: Debug coverage files before upload
         run: |
