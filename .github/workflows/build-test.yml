@@ -165,8 +165,8 @@ jobs:
           /p:CoverletOutputFormat=cobertura \
           /p:CoverletOutput=./test-results/ \
           /p:CoverletOutputName=coverage-${{ matrix.test-framework }}.cobertura \
-          /p:Exclude="[*.Tests]*" \
-          /p:ExcludeByFile="**/bin/**,**/obj/**"
+          '/p:Exclude=[*.Tests]*' \
+          '/p:ExcludeByFile=**/bin/**;**/obj/**'
           
         echo "Generated files:"
         ls -la ./test-results/
