@@ -206,7 +206,7 @@ jobs:
     name: Upload Coverage to Codacy
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: test
+    needs: [test]
     if: github.event_name == 'workflow_call' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     
     permissions:
@@ -222,6 +222,13 @@ jobs:
           pattern: test-results-*
           path: ./test-results/
           merge-multiple: true
+      
+      - name: List available artifacts (debug)
+        run: |
+          echo "Available artifacts in current run:"
+          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts --jq '.artifacts[] | "\(.name): \(.size_in_bytes) bytes"'
+        env:
+          GH_TOKEN: ${{ github.token }}
       
       - name: Debug coverage files
         run: |
