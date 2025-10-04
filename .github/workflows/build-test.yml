@@ -208,8 +208,26 @@ jobs:
           path: ./test-results/
           merge-multiple: true
       
-      - name: Upload merged coverage to Codacy
-        uses: codacy/codacy-coverage-reporter-action@v1.3.0
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: './test-results/**/coverage.cobertura.xml'
+      - name: Debug - List downloaded files
+        run: |
+          echo "📁 Downloaded test results structure:"
+          find ./test-results -name "*.xml" -type f || echo "No XML files found"
+          ls -la ./test-results/ || echo "test-results directory not found"
+      
+      - name: Find and upload coverage to Codacy
+        run: |
+          # Find all coverage files
+          COVERAGE_FILES=$(find ./test-results -name "coverage.cobertura.xml" -type f | tr '\n' ',' | sed 's/,$//')
+          echo "Found coverage files: $COVERAGE_FILES"
+          
+          if [ -n "$COVERAGE_FILES" ]; then
+            echo "Uploading coverage files to Codacy..."
+            docker run --rm \
+              -v $(pwd):/code \
+              -e CODACY_PROJECT_TOKEN="${{ secrets.CODACY_PROJECT_TOKEN }}" \
+              codacy/codacy-coverage-reporter:latest \
+              report -r $COVERAGE_FILES
+          else
+            echo "❌ No coverage files found"
+            exit 1
+          fi
