@@ -144,6 +144,7 @@ jobs:
           --logger "trx;LogFileName=test-results-${{ matrix.test-framework }}.trx" \
           --no-build \
           --parallel \
+          -- \
           /p:CollectCoverage=true \
           /p:CoverletOutputFormat=cobertura \
           /p:CoverletOutput=./test-results/coverage-${{ matrix.test-framework }}.cobertura.xml \
