@@ -341,11 +341,35 @@ jobs:
           echo "Checking if coverage files were generated anywhere:"
           find . -name "*.cobertura.xml" -type f 2>/dev/null | head -10 || echo "No cobertura files found anywhere"
       
+      - name: Organize coverage files for Codacy
+        run: |
+          echo "=== Organizing Coverage Files for Codacy ==="
+          echo "Current files:"
+          ls -la test-results/
+          
+          # Create the structure Codacy expects: test-results/**/coverage.cobertura.xml
+          for file in test-results/coverage.net*.cobertura.xml; do
+            if [ -f "$file" ]; then
+              # Extract framework (net6.0, net8.0)
+              framework=$(echo "$file" | sed 's/.*coverage\.\(net[^.]*\.[^.]*\)\.cobertura\.xml/\1/')
+              
+              # Create subdirectory for each framework
+              mkdir -p "test-results/$framework"
+              
+              # Copy file to the exact name/location Codacy expects
+              cp "$file" "test-results/$framework/coverage.cobertura.xml"
+              echo "✅ Created test-results/$framework/coverage.cobertura.xml"
+            fi
+          done
+          
+          echo "Final structure (what Codacy will find):"
+          find test-results -name "coverage.cobertura.xml" -type f | sort
+      
       - name: Upload coverage to Codacy
         if: env.CODACY_PROJECT_TOKEN != ''
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: test-results/coverage.net6.0.cobertura.xml, test-results/coverage.net8.0.cobertura.xml
+          # Let the action use its default pattern: ./test-results/**/coverage.cobertura.xml
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
