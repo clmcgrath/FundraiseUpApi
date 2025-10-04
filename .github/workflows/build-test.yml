@@ -386,11 +386,27 @@ jobs:
             fi
           done
       
-      - name: Upload coverage to Codacy
+      - name: Upload coverage to Codacy (manual CLI - action is buggy)
         if: env.CODACY_PROJECT_TOKEN != ''
-        uses: codacy/codacy-coverage-reporter-action@v1.3.0
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: "./test-results/net6.0/coverage.cobertura.xml,./test-results/net8.0/coverage.cobertura.xml"
+        run: |
+          echo "=== Manual Codacy Coverage Upload ==="
+          echo "The GitHub Action is ignoring coverage-reports parameter, using direct CLI"
+          
+          # Upload each file individually with the exact paths we verified exist
+          echo "Uploading ./test-results/net6.0/coverage.cobertura.xml..."
+          bash <(curl -Ls https://coverage.codacy.com/get.sh) report \
+            --project-token "${{ secrets.CODACY_PROJECT_TOKEN }}" \
+            -r "./test-results/net6.0/coverage.cobertura.xml" \
+            --partial
+            
+          echo "Uploading ./test-results/net8.0/coverage.cobertura.xml..."
+          bash <(curl -Ls https://coverage.codacy.com/get.sh) report \
+            --project-token "${{ secrets.CODACY_PROJECT_TOKEN }}" \
+            -r "./test-results/net8.0/coverage.cobertura.xml" \
+            --partial
+            
+          echo "Sending final coverage report..."
+          bash <(curl -Ls https://coverage.codacy.com/get.sh) final \
+            --project-token "${{ secrets.CODACY_PROJECT_TOKEN }}"
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
