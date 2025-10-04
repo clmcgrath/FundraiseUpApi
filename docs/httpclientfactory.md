@@ -369,8 +369,8 @@ services.AddFundraiseUpClient(options =>
 
 ## Related Documentation
 
-- [Configuration Guide]({% link configuration.md %}) - Complete configuration options
-- [Performance Guide]({% link performance.md %}) - Performance optimization strategies
-- [Getting Started]({% link getting-started.md %}) - Basic setup and usage
-- [Microsoft HttpClientFactory Documentation](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
+- [Configuration Guide]({% link docs/configuration.md %}) - Complete configuration options
+- [Performance Guide]({% link docs/performance.md %}) - Performance optimization strategies
+- [Getting Started]({% link docs/getting-started.md %}) - Basic setup and usage
+- [Microsoft HttpClientFactory Documentation](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
 - [Polly Resilience Framework](https://github.com/App-vNext/Polly)

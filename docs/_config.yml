@@ -40,7 +40,7 @@ logo: "/assets/images/logo.png"
 favicon_ico: "/assets/images/favicon.ico"
 
 # Footer content
-footer_content: "Copyright &copy; 2025 Chris McGrath. Distributed under the <a href=\"https://github.com/clmcgrath/FundraiseUpApi/blob/main/LICENSE\">MIT License</a>."
+footer_content: "Copyright &copy; 2025 Chris McGrath. Distributed under the <a href=\"https://github.com/clmcgrath/FundraiseUpApi/blob/master/LICENSE\">MIT License</a>."
 
 # Back to top link
 back_to_top: true

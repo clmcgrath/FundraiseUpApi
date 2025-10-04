@@ -27,31 +27,44 @@ jobs:
     name: Upload Coverage to Codacy
     runs-on: ubuntu-latest
     needs: build-and-test
-    strategy:
-      matrix:
-        include:
-          - test-framework: 'net6.0'
-            dotnet-version: '6.0.x'
-          - test-framework: 'net8.0'
-            dotnet-version: '8.0.x'
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ matrix.dotnet-version }}
-      
-      - name: Download test results
+      - name: Download .NET 6.0 test results
         uses: actions/download-artifact@v4
         with:
-          name: test-results-${{ matrix.test-framework }}
+          name: test-results-net6.0
           path: ./test-results/
+      
+      - name: Download .NET 8.0 test results
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results-net8.0
+          path: ./test-results/
+      
+      - name: Debug downloaded files
+        run: |
+          echo "=== Downloaded files debug ==="
+          echo "Looking for files in test-results directory:"
+          find ./test-results -type f | sort
+          echo ""
+          echo "Expected files:"
+          echo "- ./test-results/coverage.net6.0.cobertura.xml"
+          echo "- ./test-results/coverage.net8.0.cobertura.xml"
+          echo ""
+          for file in "./test-results/coverage.net6.0.cobertura.xml" "./test-results/coverage.net8.0.cobertura.xml"; do
+            if [ -f "$file" ]; then
+              echo "✅ Found: $file"
+              ls -la "$file"
+            else
+              echo "❌ Missing: $file"
+            fi
+          done
       
       - name: Upload coverage to Codacy
         uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: './test-results/**/coverage.cobertura.xml'
+          coverage-reports: './test-results/coverage.net6.0.cobertura.xml, ./test-results/coverage.net8.0.cobertura.xml'

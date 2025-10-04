@@ -274,7 +274,7 @@ We welcome contributions! Please see our documentation for details on how to get
 
 ### 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/clmcgrath/FundraiseUpApi/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/clmcgrath/FundraiseUpApi/blob/master/LICENSE) file for details.
 
 ### 🆘 Support
 
