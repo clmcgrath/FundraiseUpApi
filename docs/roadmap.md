@@ -23,7 +23,7 @@ The FundraiseUpApi roadmap focuses on realistic, achievable goals that enhance d
 
 ## 📈 Upcoming Versions
 
-### v1.1 - Advanced Filtering and Search Capabilities
+### v1.2 - Advanced Filtering and Search Capabilities
 **Status**: Planned  
 **Focus**: Enhanced query capabilities within FundraiseUp API constraints
 
@@ -41,7 +41,7 @@ The FundraiseUpApi roadmap focuses on realistic, achievable goals that enhance d
 
 ---
 
-### v1.2 - Enhanced Caching and Performance Optimizations
+### v1.3 - Enhanced Caching and Performance Optimizations
 **Status**: Planned  
 **Focus**: Performance improvements and intelligent caching strategies
 
@@ -60,7 +60,7 @@ The FundraiseUpApi roadmap focuses on realistic, achievable goals that enhance d
 
 ---
 
-### v1.3 - Improved Error Handling and Retry Strategies  
+### v1.4 - Improved Error Handling and Retry Strategies  
 **Status**: Planned  
 **Focus**: Robust error handling and recovery mechanisms
 
@@ -79,12 +79,13 @@ The FundraiseUpApi roadmap focuses on realistic, achievable goals that enhance d
 
 ---
 
-### v2.0 - Modern .NET Features and Performance Enhancements
+### v2.0 - Modern .NET Features and Framework Updates
 **Status**: Future Planning  
-**Focus**: Leveraging latest .NET capabilities and architectural improvements
+**Focus**: Leveraging latest .NET capabilities and framework modernization
 
 #### Planned Features
-- **Latest .NET Support**: Target newest LTS .NET versions
+- **.NET 10 LTS Support**: Target .NET 10 when released (November 2025)
+- **Framework Consolidation**: Potentially drop .NET 6 support (EOL November 2024)
 - **Source Generators**: Performance improvements through compile-time code generation
 - **Nullable Reference Types**: Enhanced null safety throughout the library
 - **Records and Modern C#**: Leverage latest C# language features
@@ -129,18 +130,28 @@ The following features are intentionally **not** included in our roadmap:
 - ✅ **Complete**: HttpClientFactory integration with connection pooling
 - ✅ **Complete**: Professional documentation with GitHub Pages
 
-### Short Term (Next 6 months)
-- 🎯 **v1.1**: Advanced filtering and search capabilities
-- 📊 **Focus**: Developer experience improvements and query flexibility
+### Current Focus (v1.1 - In Progress)
+- 🔄 **In Progress**: CI/CD pipeline optimizations and workflow consolidation
+- 🔄 **In Progress**: Code quality improvements with enhanced coverage reporting
+- 🔄 **In Progress**: Testing infrastructure and reliability enhancements
+- 📋 **Planned**: Documentation updates and maintenance automation
+
+### Short Term (Next 3-6 months)
+- 🎯 **v1.1**: Stability improvements and CI/CD optimizations (Current focus)
+- 📊 **Focus**: Code quality, testing coverage, and deployment pipeline enhancements
 
 ### Medium Term (6-12 months)  
-- 🎯 **v1.2**: Performance optimizations and caching
-- 📊 **Focus**: Performance, scalability, and resource efficiency
+- 🎯 **v1.2**: Advanced filtering and search capabilities
+- 📊 **Focus**: Developer experience improvements and query flexibility
 
-### Long Term (12+ months)
-- 🎯 **v1.3**: Enhanced error handling and retry strategies
-- 🎯 **v2.0**: Modern .NET features and architectural improvements
-- 📊 **Focus**: Resilience, maintainability, and future-proofing
+### Long Term (12-18 months)
+- 🎯 **v1.3**: Performance optimizations and caching
+- 🎯 **v1.4**: Enhanced error handling and retry strategies
+- 📊 **Focus**: Performance, resilience, and scalability
+
+### Future Planning (18+ months)
+- 🎯 **v2.0**: Modern .NET features and framework updates (.NET 10 LTS)
+- 📊 **Focus**: Framework modernization and architectural improvements
 
 ---
 
