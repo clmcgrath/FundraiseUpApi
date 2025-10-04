@@ -58,6 +58,7 @@ jobs:
       with:
         configFilePath: GitVersion.yml
       id: gitversion
+      continue-on-error: false
 
     - name: Restore dependencies
       run: dotnet restore
@@ -81,10 +82,9 @@ jobs:
 
     - name: Validate multi-target framework builds
       run: |
-        echo "Verifying all target framework build outputs..."
-        ls -la src/FundraiseUp.Client/bin/Release/netstandard2.0/ || echo "❌ netstandard2.0 output not found"
-        ls -la src/FundraiseUp.Client/bin/Release/net6.0/ || echo "❌ net6.0 output not found"
-        ls -la src/FundraiseUp.Client/bin/Release/net8.0/ || echo "❌ net8.0 output not found"
+        echo "Verifying target framework build outputs..."
+        find src/FundraiseUp.Client/bin/Release -name "*.dll" -o -name "*.exe" | head -10
+        echo "Build validation completed"
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -123,29 +123,23 @@ jobs:
       with:
         name: build-artifacts-${{ matrix.dotnet-version }}
 
-    - name: Run tests for ${{ matrix.display-name }}
-      id: run-tests
+    - name: Verify build artifacts
       run: |
-        echo "Running tests for ${{ matrix.display-name }}..."
+        echo "Checking downloaded build artifacts..."
+        find . -name "*.dll" -path "*/bin/Release/*" | head -5
+        ls -la packages/ 2>/dev/null || echo "No packages directory found"
+
+    - name: Run tests for ${{ matrix.display-name }}
+      run: |
         dotnet test \
           --configuration Release \
           --no-build \
           --framework ${{ matrix.test-framework }} \
           --verbosity minimal \
           --logger "trx;LogFileName=test-results.trx" \
-          --logger "console;verbosity=detailed" \
           --collect:"XPlat Code Coverage" \
-          --results-directory ./test-results
-        
-        # Check if tests passed
-        if [ $? -eq 0 ]; then
-          echo "✅ Tests passed for ${{ matrix.display-name }}"
-          echo "status=success" >> $GITHUB_OUTPUT
-        else
-          echo "❌ Tests failed for ${{ matrix.display-name }}"
-          echo "status=failure" >> $GITHUB_OUTPUT
-          exit 1
-        fi
+          --results-directory ./test-results \
+          --settings coverage.runsettings
 
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action@v2.20.0
@@ -187,12 +181,12 @@ jobs:
         echo "✅ All builds and tests passed successfully!"
         echo "🚀 Ready for merge"
 
-  # Upload coverage to Codacy during PR events (internal PRs only to avoid secret access issues)
+  # Upload coverage to Codacy (internal PRs and workflow calls only to avoid secret access issues)
   codacy-coverage:
     name: Upload Coverage to Codacy
     runs-on: ubuntu-latest
     needs: test
-    if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'push' && contains(github.ref, 'refs/heads/'))
+    if: github.event_name == 'workflow_call' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     
     permissions:
       contents: read
@@ -208,26 +202,8 @@ jobs:
           path: ./test-results/
           merge-multiple: true
       
-      - name: Debug - List downloaded files
-        run: |
-          echo "📁 Downloaded test results structure:"
-          find ./test-results -name "*.xml" -type f || echo "No XML files found"
-          ls -la ./test-results/ || echo "test-results directory not found"
-      
-      - name: Find and upload coverage to Codacy
-        run: |
-          # Find all coverage files
-          COVERAGE_FILES=$(find ./test-results -name "coverage.cobertura.xml" -type f | tr '\n' ',' | sed 's/,$//')
-          echo "Found coverage files: $COVERAGE_FILES"
-          
-          if [ -n "$COVERAGE_FILES" ]; then
-            echo "Uploading coverage files to Codacy..."
-            docker run --rm \
-              -v $(pwd):/code \
-              -e CODACY_PROJECT_TOKEN="${{ secrets.CODACY_PROJECT_TOKEN }}" \
-              codacy/codacy-coverage-reporter:latest \
-              report -r $COVERAGE_FILES
-          else
-            echo "❌ No coverage files found"
-            exit 1
-          fi
+      - name: Upload coverage to Codacy
+        uses: codacy/codacy-coverage-reporter-action@v1.3.0
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: './test-results/**/coverage.cobertura.xml'
