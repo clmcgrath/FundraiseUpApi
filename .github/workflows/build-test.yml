@@ -146,20 +146,26 @@ jobs:
         dotnet-coverage collect \
           --output ./test-results/coverage-${{ matrix.test-framework }}.cobertura.xml \
           --output-format cobertura \
-          "dotnet test \
+          "dotnet test tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj \
             --configuration Release \
             --framework ${{ matrix.test-framework }} \
             --verbosity minimal \
-            --logger trx;LogFileName=./test-results/test-results.trx \
+            --results-directory ./test-results \
+            --logger trx \
             --no-build \
             --parallel"
+        
+        echo "Generated files:"
+        ls -la ./test-results/
+        echo "TRX file check:"
+        ls -la ./test-results/*.trx 2>/dev/null || echo "No TRX files found"
 
     - name: Publish test results
       uses: dorny/test-reporter@v1
       if: always()
       with:
         name: 'Test Results (${{ matrix.display-name }})'
-        path: './test-results/test-results.trx'
+        path: './test-results/*.trx'
         reporter: 'dotnet-trx'
         fail-on-error: false
 
