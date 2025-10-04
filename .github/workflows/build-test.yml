@@ -135,6 +135,9 @@ jobs:
       run: |
         echo "Starting test execution for ${{ matrix.display-name }}"
         
+        # Create test results directory first
+        mkdir -p ./test-results
+        
         # Run tests with coverage using coverlet.msbuild
         dotnet test tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj \
           --configuration Release \
@@ -145,7 +148,8 @@ jobs:
           --no-build \
           /p:CollectCoverage=true \
           /p:CoverletOutputFormat=cobertura \
-          /p:CoverletOutput=./test-results/coverage-${{ matrix.test-framework }}.cobertura.xml \
+          /p:CoverletOutput="$(pwd)/test-results/" \
+          /p:CoverletOutputName="coverage-${{ matrix.test-framework }}.cobertura" \
           /p:ExcludeByFile="**/Migrations/**/*.cs"
         
         echo "Generated files:"
@@ -154,6 +158,8 @@ jobs:
         ls -la ./test-results/*.xml 2>/dev/null || echo "No XML coverage files found"
         echo "TRX files:"
         ls -la ./test-results/*.trx 2>/dev/null || echo "No TRX files found"
+        echo "All files in current directory:"
+        find . -name "*coverage*" -o -name "*.xml" | head -10
 
     - name: Publish test results
       uses: dorny/test-reporter@v1
@@ -204,12 +210,6 @@ jobs:
     needs: [test]
     if: github.event_name == 'workflow_call' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     
-    permissions:
-      contents: read
-      checks: write
-      statuses: write
-      pull-requests: write
-    
     steps:
       - name: Download all test results
         uses: actions/download-artifact@v4
@@ -241,16 +241,34 @@ jobs:
       
       - name: Check secret availability
         run: |
+          echo "=== Debugging Secret Access ==="
+          echo "Event: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Head repo: ${{ github.event.pull_request.head.repo.full_name || 'N/A' }}"
+          echo "Base repo: ${{ github.event.pull_request.base.repo.full_name || 'N/A' }}"
+          echo "Is fork: ${{ github.event.pull_request.head.repo.fork || 'N/A' }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Job: ${{ github.job }}"
+          
+          # Check if secret exists at all
+          echo "Raw secret check: '${{ secrets.CODACY_PROJECT_TOKEN }}'"
+          
           if [ -z "$CODACY_PROJECT_TOKEN" ]; then
-            echo "❌ CODACY_PROJECT_TOKEN secret is not available"
-            echo "Event: ${{ github.event_name }}"
-            echo "Is fork: ${{ github.event.pull_request.head.repo.fork }}"
-            echo "Repository: ${{ github.repository }}"
+            echo "❌ CODACY_PROJECT_TOKEN secret is not available in environment"
           else
-            echo "✅ CODACY_PROJECT_TOKEN secret is available"
+            echo "✅ CODACY_PROJECT_TOKEN secret is available in environment"
+          fi
+          
+          # Try direct access
+          if [ "${{ secrets.CODACY_PROJECT_TOKEN }}" = "" ]; then
+            echo "❌ Direct secret access is empty"
+          else
+            echo "✅ Direct secret access works (length: ${#DIRECT_TOKEN})"
           fi
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          DIRECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       
       - name: Upload coverage to Codacy
         if: env.CODACY_PROJECT_TOKEN != ''
