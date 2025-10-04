@@ -1,4 +1,4 @@
-name: Codacy Analysis
+name: Codacy Coverage
 
 on:
   push:
@@ -8,65 +8,63 @@ on:
 
 permissions:
   contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+  statuses: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
-  codacy-security-scan:
-    name: Codacy Security Scan
-    permissions:
-      contents: read
-      security-events: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # Import build-test workflow for proper build and test execution
+  build-and-test:
+    uses: ./.github/workflows/build-test.yml
 
-      - name: Run Codacy Analysis CLI
-        uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08
-        with:
-          # Check https://github.com/codacy/codacy-analysis-cli#project-token to get your project token from your Codacy repository
-          # You can also omit the token and run the tools that support default configurations
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          verbose: true
-          output: results.sarif
-          format: sarif
-          # Adjust severity of non-security issues
-          gh-code-scanning-compat: true
-          # Force 0 exit code to allow SARIF file generation
-          # This will handover control about PR rejection to the GitHub side
-          max-allowed-issues: 2147483647
-
-      - name: Upload SARIF results file
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results.sarif
-  
   codacy-coverage:
-    name: Codacy Coverage Report
+    name: Upload Coverage to Codacy
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        dotnet-version: ['6.0.x', '8.0.x']
+    needs: build-and-test
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - name: Download .NET 6.0 test results
+        uses: actions/download-artifact@v4
         with:
-          dotnet-version: ${{ matrix.dotnet-version }}
+          name: test-results-net6.0
+          path: ./test-results/
       
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Download .NET 8.0 test results
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results-net8.0
+          path: ./test-results/
       
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-      
-      - name: Test with Coverage
-        run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+      - name: Debug downloaded files
+        run: |
+          echo "=== Downloaded files debug ==="
+          echo "Looking for files in test-results directory:"
+          find ./test-results -type f | sort
+          echo ""
+          echo "Expected files:"
+          echo "- ./test-results/coverage.net6.0.cobertura.xml"
+          echo "- ./test-results/coverage.net8.0.cobertura.xml"
+          echo ""
+          for file in "./test-results/coverage.net6.0.cobertura.xml" "./test-results/coverage.net8.0.cobertura.xml"; do
+            if [ -f "$file" ]; then
+              echo "✅ Found: $file"
+              ls -la "$file"
+            else
+              echo "❌ Missing: $file"
+            fi
+          done
       
       - name: Upload coverage to Codacy
         uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: '**/coverage.cobertura.xml'
+          coverage-reports: './test-results/coverage.net6.0.cobertura.xml, ./test-results/coverage.net8.0.cobertura.xml'

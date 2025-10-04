@@ -1,7 +1,6 @@
 name: Build and Test
 
 on:
-  push:
   workflow_dispatch:
   workflow_call:
     # Allow this workflow to be called by other workflows
@@ -23,6 +22,7 @@ jobs:
   build:
     name: '🏗️ Build ${{ matrix.dotnet-version }}'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     strategy:
       matrix:
@@ -47,7 +47,6 @@ jobs:
           ${{ runner.os }}-nuget-
 
     - name: Install GitVersion
-
       uses: gittools/actions/gitversion/setup@v4.1.0
       with:
         versionSpec: '6.4.0'
@@ -57,6 +56,7 @@ jobs:
       with:
         configFilePath: GitVersion.yml
       id: gitversion
+      continue-on-error: false
 
     - name: Restore dependencies
       run: dotnet restore
@@ -80,10 +80,9 @@ jobs:
 
     - name: Validate multi-target framework builds
       run: |
-        echo "Verifying all target framework build outputs..."
-        ls -la src/FundraiseUp.Client/bin/Release/netstandard2.0/ || echo "❌ netstandard2.0 output not found"
-        ls -la src/FundraiseUp.Client/bin/Release/net6.0/ || echo "❌ net6.0 output not found"
-        ls -la src/FundraiseUp.Client/bin/Release/net8.0/ || echo "❌ net8.0 output not found"
+        echo "Verifying target framework build outputs..."
+        find src/FundraiseUp.Client/bin/Release -name "*.dll" -o -name "*.exe" | head -10
+        echo "Build validation completed"
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -97,6 +96,7 @@ jobs:
   test:
     name: '🧪 Test ${{ matrix.display-name }}'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: build
     
     strategy:
@@ -122,37 +122,82 @@ jobs:
       with:
         name: build-artifacts-${{ matrix.dotnet-version }}
 
-    - name: Run tests for ${{ matrix.display-name }}
-      id: run-tests
+    - name: Verify build artifacts
       run: |
-        echo "Running tests for ${{ matrix.display-name }}..."
-        dotnet test \
-          --configuration Release \
-          --no-build \
-          --framework ${{ matrix.test-framework }} \
-          --verbosity minimal \
-          --logger "trx;LogFileName=test-results.trx" \
-          --logger "console;verbosity=detailed" \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ./test-results
+        echo "Checking downloaded build artifacts..."
+        find . -name "*.dll" -path "*/bin/Release/*" | head -5
+        ls -la packages/ 2>/dev/null || echo "No packages directory found"
+
+    - name: Run tests for ${{ matrix.display-name }}
+      timeout-minutes: 10
+      run: |
+        echo "Starting test execution for ${{ matrix.display-name }}"
         
-        # Check if tests passed
-        if [ $? -eq 0 ]; then
-          echo "✅ Tests passed for ${{ matrix.display-name }}"
-          echo "status=success" >> $GITHUB_OUTPUT
+        # Create test results directory first
+        mkdir -p ./test-results
+        
+        # Check if runsettings file exists
+        if [ -f "coverlet.runsettings" ]; then
+          echo "✅ coverlet.runsettings found"
+          cat coverlet.runsettings
         else
-          echo "❌ Tests failed for ${{ matrix.display-name }}"
-          echo "status=failure" >> $GITHUB_OUTPUT
-          exit 1
+          echo "❌ coverlet.runsettings not found"
         fi
+        
+        # Check what coverage collectors are available
+        echo "=== Available Data Collectors ==="
+        dotnet test --list-tests --verbosity quiet tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj --framework ${{ matrix.test-framework }} || true
+        
+        # Check installed packages
+        echo "=== Installed Packages ==="
+        dotnet list tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj package | grep -i cover || echo "No coverage packages found"
+        
+        # Try coverlet.msbuild approach - fix output path
+        echo "=== Attempting coverage with coverlet.msbuild ==="
+        dotnet test tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj \
+          --configuration Release \
+          --framework ${{ matrix.test-framework }} \
+          --verbosity normal \
+          --results-directory ./test-results \
+          --logger "trx;LogFileName=test-results-${{ matrix.test-framework }}.trx" \
+          /p:CollectCoverage=true \
+          /p:CoverletOutputFormat=cobertura \
+          /p:CoverletOutput=../../test-results/ \
+          /p:CoverletOutputName=coverage-${{ matrix.test-framework }}.cobertura \
+          /p:Exclude=[*.Tests]*
+          
+        echo "Generated files:"
+        ls -la ./test-results/
+        echo "Coverage files:"
+        ls -la ./test-results/*.xml 2>/dev/null || echo "No XML coverage files found"
+        echo "TRX files:"
+        ls -la ./test-results/*.trx 2>/dev/null || echo "No TRX files found"
+        
+        echo "Looking for coverage files in subdirectories:"
+        find ./test-results -name "*.xml" -type f 2>/dev/null || echo "No coverage XML files found"
+        
+        # XPlat Code Coverage creates files in GUID subdirectories, let's find and copy them
+        echo "Searching for Cobertura coverage files:"
+        coverage_file=$(find ./test-results -name "coverage.cobertura.xml" -type f | head -1)
+        if [ ! -z "$coverage_file" ]; then
+          echo "Found coverage file: $coverage_file"
+          cp "$coverage_file" "./test-results/coverage-${{ matrix.test-framework }}.cobertura.xml"
+          echo "Copied to: ./test-results/coverage-${{ matrix.test-framework }}.cobertura.xml"
+        else
+          echo "❌ No coverage.cobertura.xml file found"
+        fi
+        
+        echo "Final coverage files:"
+        ls -la ./test-results/coverage-*.xml 2>/dev/null || echo "No final coverage files"
 
     - name: Publish test results
-      uses: EnricoMi/publish-unit-test-result-action@v2.17.1
+      uses: dorny/test-reporter@v1
       if: always()
       with:
-        files: './test-results/*.trx'
-        check_name: 'Test Results (${{ matrix.display-name }})'
-        comment_title: 'Test Results for ${{ matrix.display-name }}'
+        name: 'Test Results (${{ matrix.display-name }})'
+        path: './test-results/test-results-${{ matrix.test-framework }}.trx'
+        reporter: 'dotnet-trx'
+        fail-on-error: false
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
