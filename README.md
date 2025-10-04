@@ -2,8 +2,8 @@
 
 [![NuGet](https://img.shields.io/nuget/v/FundraiseUp.Client.svg)](https://www.nuget.org/packages/FundraiseUp.Client)
 [![Build and Test](https://github.com/clmcgrath/FundraiseUpApi/actions/workflows/build-test.yml/badge.svg)](https://github.com/clmcgrath/FundraiseUpApi/actions/workflows/build-test.yml)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/PLACEHOLDER)](https://app.codacy.com/gh/clmcgrath/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/PLACEHOLDER)](https://app.codacy.com/gh/clmcgrath/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b9b28df806c24154bd68b4e0ee98beda)](https://app.codacy.com/gh/clmcgrath/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/b9b28df806c24154bd68b4e0ee98beda)](https://app.codacy.com/gh/clmcgrath/FundraiseUpApi/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-Standard%202.0%20%7C%20.NET%206+-512BD4.svg)](https://dotnet.microsoft.com/)
 
