@@ -352,8 +352,8 @@ jobs:
             chmod +x codacy-coverage-reporter
           fi
           
-          # Upload each coverage file individually
-          for file in test-results/coverage-*.cobertura.xml; do
+          # Upload each coverage file individually (using actual file names generated)
+          for file in test-results/coverage.net*.cobertura.xml; do
             if [ -f "$file" ]; then
               echo "Uploading $file..."
               ./codacy-coverage-reporter report --project-token "${{ secrets.CODACY_PROJECT_TOKEN }}" -r "$file" --partial
