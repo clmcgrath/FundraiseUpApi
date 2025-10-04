@@ -341,27 +341,11 @@ jobs:
           echo "Checking if coverage files were generated anywhere:"
           find . -name "*.cobertura.xml" -type f 2>/dev/null | head -10 || echo "No cobertura files found anywhere"
       
-      - name: Upload coverage to Codacy (manual CLI approach)
+      - name: Upload coverage to Codacy
         if: env.CODACY_PROJECT_TOKEN != ''
-        run: |
-          echo "Trying manual Codacy upload..."
-          
-          # Download Codacy coverage reporter if not available
-          if [ ! -f "codacy-coverage-reporter" ]; then
-            curl -Ls -o codacy-coverage-reporter "$(curl -Ls https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r '.assets | map(select(.name | contains("codacy-coverage-reporter-linux"))) | .[0].browser_download_url')"
-            chmod +x codacy-coverage-reporter
-          fi
-          
-          # Upload each coverage file individually (using actual file names generated)
-          for file in test-results/coverage.net*.cobertura.xml; do
-            if [ -f "$file" ]; then
-              echo "Uploading $file..."
-              ./codacy-coverage-reporter report --project-token "${{ secrets.CODACY_PROJECT_TOKEN }}" -r "$file" --partial
-            fi
-          done
-          
-          # Send final report
-          echo "Sending final coverage report..."
-          ./codacy-coverage-reporter final --project-token "${{ secrets.CODACY_PROJECT_TOKEN }}"
+        uses: codacy/codacy-coverage-reporter-action@v1.3.0
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: test-results/coverage.net6.0.cobertura.xml, test-results/coverage.net8.0.cobertura.xml
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
