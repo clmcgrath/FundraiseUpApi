@@ -334,18 +334,15 @@ jobs:
           
           echo "Final directory structure:"
           find test-results -type f 2>/dev/null || echo "No files in test-results"
+          
+          echo "Detailed test-results listing:"
+          ls -laR test-results/ 2>/dev/null || echo "test-results directory is empty or doesn't exist"
+          
+          echo "Checking if coverage files were generated anywhere:"
+          find . -name "*.cobertura.xml" -type f 2>/dev/null | head -10 || echo "No cobertura files found anywhere"
       
-      - name: Upload coverage to Codacy (try direct file specification)
+      - name: Upload coverage to Codacy (manual CLI approach)
         if: env.CODACY_PROJECT_TOKEN != ''
-        uses: codacy/codacy-coverage-reporter-action@v1.3.0
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: test-results/coverage-net6.0.cobertura.xml test-results/coverage-net8.0.cobertura.xml
-        env:
-          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      
-      - name: Manual Codacy upload (fallback)
-        if: env.CODACY_PROJECT_TOKEN != '' && failure()
         run: |
           echo "Trying manual Codacy upload..."
           
