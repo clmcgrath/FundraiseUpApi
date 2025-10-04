@@ -370,6 +370,21 @@ jobs:
           
           echo "File contents preview (first few lines):"
           find test-results -name "coverage.cobertura.xml" -type f -exec head -3 {} \;
+          
+          echo "Testing Codacy's exact search pattern:"
+          echo "Current working directory: $(pwd)"
+          echo "Testing pattern: ./test-results/**/coverage.cobertura.xml"
+          
+          # Test the exact glob pattern Codacy uses
+          shopt -s globstar
+          for file in ./test-results/**/coverage.cobertura.xml; do
+            if [ -f "$file" ]; then
+              echo "✅ Pattern match found: $file"
+              ls -la "$file"
+            else
+              echo "❌ Pattern match failed: $file"
+            fi
+          done
       
       - name: Upload coverage to Codacy
         if: env.CODACY_PROJECT_TOKEN != ''
