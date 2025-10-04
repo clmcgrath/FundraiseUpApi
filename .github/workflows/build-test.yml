@@ -131,15 +131,24 @@ jobs:
 
     - name: Run tests for ${{ matrix.display-name }}
       run: |
+        echo "Starting test execution for ${{ matrix.display-name }}"
         dotnet test \
           --configuration Release \
           --no-build \
           --framework ${{ matrix.test-framework }} \
           --verbosity minimal \
           --logger "trx;LogFileName=test-results.trx" \
-          --collect:"XPlat Code Coverage" \
           --results-directory ./test-results \
-          --settings coverage.runsettings
+          /p:CollectCoverage=true \
+          /p:CoverletOutputFormat=cobertura \
+          /p:CoverletOutput=./test-results/coverage.cobertura.xml \
+          /p:ExcludeByFile="**/Migrations/**/*.cs"
+        
+        echo "=== Test execution completed, checking generated files ==="
+        find ./test-results -type f | sort
+        echo ""
+        echo "=== Looking for coverage files specifically ==="
+        find ./test-results -name "*coverage*" -type f || echo "No coverage files found"
 
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action@v2.20.0
@@ -202,8 +211,22 @@ jobs:
           path: ./test-results/
           merge-multiple: true
       
+      - name: Debug coverage files
+        run: |
+          echo "=== Full directory structure ==="
+          find ./test-results -type f | sort
+          echo ""
+          echo "=== Looking for any coverage files ==="
+          find ./test-results -name "*coverage*" -type f || echo "No coverage files found"
+          echo ""
+          echo "=== Looking for XML files ==="
+          find ./test-results -name "*.xml" -type f || echo "No XML files found"
+          echo ""
+          echo "=== Directory sizes ==="
+          du -sh ./test-results/* 2>/dev/null || echo "No subdirectories"
+      
       - name: Upload coverage to Codacy
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: './test-results/**/coverage.cobertura.xml'
+          coverage-reports: './test-results/coverage.cobertura.xml'
