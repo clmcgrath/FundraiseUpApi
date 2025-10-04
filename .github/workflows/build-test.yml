@@ -387,8 +387,12 @@ jobs:
           done
       
       - name: Upload coverage to Codacy (manual CLI - action is buggy)
-        if: env.CODACY_PROJECT_TOKEN != ''
         run: |
+          if [ -z "${{ secrets.CODACY_PROJECT_TOKEN }}" ]; then
+            echo "❌ CODACY_PROJECT_TOKEN secret is not available"
+            echo "Skipping coverage upload"
+            exit 0
+          fi
           echo "=== Manual Codacy Coverage Upload ==="
           echo "The GitHub Action is ignoring coverage-reports parameter, using direct CLI"
           
