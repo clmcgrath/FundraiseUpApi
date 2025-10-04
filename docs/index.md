@@ -13,7 +13,7 @@ permalink: /
 # FundraiseUp .NET Client Library
 
 [![NuGet](https://img.shields.io/nuget/v/FundraiseUp.Client.svg)](https://www.nuget.org/packages/FundraiseUp.Client)
-[![Build Status](https://github.com/clmcgrath/FundraiseUpApi/workflows/CI/badge.svg)](https://github.com/clmcgrath/FundraiseUpApi/actions)
+[![Build and Test](https://github.com/clmcgrath/FundraiseUpApi/actions/workflows/build-test.yml/badge.svg)](https://github.com/clmcgrath/FundraiseUpApi/actions/workflows/build-test.yml)
 [![License](https://img.shields.io/github/license/clmcgrath/FundraiseUpApi.svg)](https://github.com/clmcgrath/FundraiseUpApi/blob/main/LICENSE)
 
 A modern, fluent .NET client library for consuming the FundraiseUp API with comprehensive support for all endpoints, production-ready async patterns, dependency injection, and enterprise-grade reliability.
