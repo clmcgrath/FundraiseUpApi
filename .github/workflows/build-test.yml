@@ -273,6 +273,6 @@ jobs:
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: './test-results/coverage-*.cobertura.xml'
+          coverage-reports: 'test-results/coverage-net6.0.cobertura.xml,test-results/coverage-net8.0.cobertura.xml'
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
