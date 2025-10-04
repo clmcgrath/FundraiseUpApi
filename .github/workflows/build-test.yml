@@ -146,7 +146,7 @@ jobs:
           --no-build \
           /p:CollectCoverage=true \
           /p:CoverletOutputFormat=cobertura \
-          /p:CoverletOutput="$(pwd)/test-results/" \
+          /p:CoverletOutput="./test-results/" \
           /p:CoverletOutputName="coverage-${{ matrix.test-framework }}.cobertura" \
           /p:ExcludeByFile="**/Migrations/**/*.cs"
         
@@ -267,6 +267,34 @@ jobs:
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
           DIRECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      
+      - name: Debug coverage files before upload
+        run: |
+          echo "=== Coverage File Debug ==="
+          echo "Current directory: $(pwd)"
+          echo "Looking for coverage files..."
+          
+          echo "Contents of test-results directory:"
+          if [ -d "test-results" ]; then
+            ls -la test-results/
+          else
+            echo "❌ test-results directory does not exist"
+          fi
+          
+          echo "Searching for all coverage files:"
+          find . -name "*coverage*" -type f 2>/dev/null || echo "No coverage files found"
+          
+          echo "Searching for all .xml files:"
+          find . -name "*.xml" -type f 2>/dev/null || echo "No XML files found"
+          
+          echo "Checking specific files Codacy is looking for:"
+          for file in "test-results/coverage-net6.0.cobertura.xml" "test-results/coverage-net8.0.cobertura.xml"; do
+            if [ -f "$file" ]; then
+              echo "✅ Found: $file (size: $(wc -c < "$file") bytes)"
+            else
+              echo "❌ Missing: $file"
+            fi
+          done
       
       - name: Upload coverage to Codacy
         if: env.CODACY_PROJECT_TOKEN != ''
