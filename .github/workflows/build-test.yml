@@ -137,27 +137,37 @@ jobs:
         mkdir -p ./test-results
         
         # Run tests with coverage using coverlet.msbuild
-        dotnet test tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj \
+          dotnet test tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj \
           --configuration Release \
           --framework ${{ matrix.test-framework }} \
-          --verbosity minimal \
+          --verbosity normal \
           --results-directory ./test-results \
           --logger "trx;LogFileName=test-results-${{ matrix.test-framework }}.trx" \
           --no-build \
-          /p:CollectCoverage=true \
-          /p:CoverletOutputFormat=cobertura \
-          /p:CoverletOutput="./test-results/" \
-          /p:CoverletOutputName="coverage-${{ matrix.test-framework }}.cobertura" \
-          /p:ExcludeByFile="**/Migrations/**/*.cs"
-        
-        echo "Generated files:"
+          --collect:"XPlat Code Coverage" \
+          --settings coverlet.runsettings        echo "Generated files:"
         ls -la ./test-results/
         echo "Coverage files:"
         ls -la ./test-results/*.xml 2>/dev/null || echo "No XML coverage files found"
         echo "TRX files:"
         ls -la ./test-results/*.trx 2>/dev/null || echo "No TRX files found"
-        echo "All files in current directory:"
-        find . -name "*coverage*" -o -name "*.xml" | head -10
+        
+        echo "Looking for coverage files in subdirectories:"
+        find ./test-results -name "*.xml" -type f 2>/dev/null || echo "No coverage XML files found"
+        
+        # XPlat Code Coverage creates files in GUID subdirectories, let's find and copy them
+        echo "Searching for Cobertura coverage files:"
+        coverage_file=$(find ./test-results -name "coverage.cobertura.xml" -type f | head -1)
+        if [ ! -z "$coverage_file" ]; then
+          echo "Found coverage file: $coverage_file"
+          cp "$coverage_file" "./test-results/coverage-${{ matrix.test-framework }}.cobertura.xml"
+          echo "Copied to: ./test-results/coverage-${{ matrix.test-framework }}.cobertura.xml"
+        else
+          echo "❌ No coverage.cobertura.xml file found"
+        fi
+        
+        echo "Final coverage files:"
+        ls -la ./test-results/coverage-*.xml 2>/dev/null || echo "No final coverage files"
 
     - name: Publish test results
       uses: dorny/test-reporter@v1
