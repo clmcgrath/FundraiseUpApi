@@ -44,25 +44,6 @@ jobs:
           name: test-results-net8.0
           path: ./test-results/
       
-      - name: Debug downloaded files
-        run: |
-          echo "=== Downloaded files debug ==="
-          echo "Looking for files in test-results directory:"
-          find ./test-results -type f | sort
-          echo ""
-          echo "Expected files:"
-          echo "- ./test-results/coverage.net6.0.cobertura.xml"
-          echo "- ./test-results/coverage.net8.0.cobertura.xml"
-          echo ""
-          for file in "./test-results/coverage.net6.0.cobertura.xml" "./test-results/coverage.net8.0.cobertura.xml"; do
-            if [ -f "$file" ]; then
-              echo "✅ Found: $file"
-              ls -la "$file"
-            else
-              echo "❌ Missing: $file"
-            fi
-          done
-      
       - name: Upload coverage to Codacy
         uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699
         with:

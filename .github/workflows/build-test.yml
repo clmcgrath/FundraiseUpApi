@@ -133,27 +133,8 @@ jobs:
       run: |
         echo "Starting test execution for ${{ matrix.display-name }}"
         
-        # Create test results directory first
+        # Create test results directory and run tests with coverage
         mkdir -p ./test-results
-        
-        # Check if runsettings file exists
-        if [ -f "coverlet.runsettings" ]; then
-          echo "✅ coverlet.runsettings found"
-          cat coverlet.runsettings
-        else
-          echo "❌ coverlet.runsettings not found"
-        fi
-        
-        # Check what coverage collectors are available
-        echo "=== Available Data Collectors ==="
-        dotnet test --list-tests --verbosity quiet tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj --framework ${{ matrix.test-framework }} || true
-        
-        # Check installed packages
-        echo "=== Installed Packages ==="
-        dotnet list tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj package | grep -i cover || echo "No coverage packages found"
-        
-        # Try coverlet.msbuild approach - fix output path
-        echo "=== Attempting coverage with coverlet.msbuild ==="
         dotnet test tests/FundraiseUp.Client.Tests/FundraiseUp.Client.Tests.csproj \
           --configuration Release \
           --framework ${{ matrix.test-framework }} \
@@ -166,28 +147,11 @@ jobs:
           /p:CoverletOutputName=coverage-${{ matrix.test-framework }}.cobertura \
           /p:Exclude=[*.Tests]*
           
-        echo "Generated files:"
-        ls -la ./test-results/
-        echo "Coverage files:"
-        ls -la ./test-results/*.xml 2>/dev/null || echo "No XML coverage files found"
-        echo "TRX files:"
-        ls -la ./test-results/*.trx 2>/dev/null || echo "No TRX files found"
-        
-        echo "Looking for coverage files in subdirectories:"
-        find ./test-results -name "*.xml" -type f 2>/dev/null || echo "No coverage XML files found"
-        
-        # XPlat Code Coverage creates files in GUID subdirectories, let's find and copy them
-        echo "Searching for Cobertura coverage files:"
+        # Find and copy coverage file if needed
         coverage_file=$(find ./test-results -name "coverage.cobertura.xml" -type f | head -1)
         if [ ! -z "$coverage_file" ]; then
-          echo "Found coverage file: $coverage_file"
           cp "$coverage_file" "./test-results/coverage-${{ matrix.test-framework }}.cobertura.xml"
-          echo "Copied to: ./test-results/coverage-${{ matrix.test-framework }}.cobertura.xml"
-        else
-          echo "❌ No coverage.cobertura.xml file found"
         fi
-        
-        echo "Final coverage files:"
         ls -la ./test-results/coverage-*.xml 2>/dev/null || echo "No final coverage files"
 
     - name: Publish test results
